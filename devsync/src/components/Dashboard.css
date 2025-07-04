@@ -1,0 +1,189 @@
+/* Tab Navigation */
+.tab-nav {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.tab-nav button {
+  background-color: #e5e7eb;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-nav button:hover {
+  background-color: #d1d5db;
+}
+
+.tab-nav button.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Section Layout */
+.section {
+  background: #f9fafb;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.section h2 {
+  margin-bottom: 16px;
+  font-size: 20px;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Jira Ticket List */
+.section ul {
+  padding-left: 0;
+  list-style-type: none;
+}
+
+.section li {
+  background: white;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section li strong {
+  color: #111827;
+}
+
+.section li .ticket-status {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+/* Task Section */
+.task-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.task-section input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.task-section button {
+  background-color: #2563eb;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px 20px;
+}
+
+
+.dashboard-header h1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-header button {
+  padding: 8px 14px;
+  background: #f87171;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Typography Refresh */
+h1, h2 {
+  font-family: "Segoe UI", sans-serif;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+h1 {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+p, li, button, input, textarea {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+  color: #374151;
+}
+
+li strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.ticket-status, .user-email {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+button {
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+a {
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.tab-nav button {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* .dashboard-container {
+  max-width: 860px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+  font-family: "Segoe UI", sans-serif;
+  animation: fadeIn 0.4s ease;
+} */
