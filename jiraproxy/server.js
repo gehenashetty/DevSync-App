@@ -22,7 +22,7 @@ const encodedCreds = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString(
 app.get("/api/jira", async (req, res) => {
   try {
     const response = await fetch(
-      `https://${JIRA_DOMAIN}/rest/api/3/search?jql=project=MBA`,
+      `https://${JIRA_DOMAIN}/rest/api/3/search?jql=project=ECS`,
       {
         headers: {
           Authorization: `Basic ${encodedCreds}`,
@@ -52,7 +52,6 @@ app.get("/api/jira", async (req, res) => {
   }
 });
 
-
 // POST Jira issue
 app.post("/api/jira/create", async (req, res) => {
   const { summary, description, projectKey } = req.body;
@@ -67,7 +66,7 @@ app.post("/api/jira/create", async (req, res) => {
       },
       body: JSON.stringify({
         fields: {
-          project: { key: "MBA" },
+          project: { key: "ECS" },
           summary,
           description: {
             type: "doc",
@@ -123,7 +122,6 @@ app.get("/api/github/issues", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch GitHub issues" });
   }
 });
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
