@@ -24,7 +24,6 @@ dist-ssr
 *.sw?
 
 node_modules
-.env
 eslint.config.js
 
 package-lock.json
