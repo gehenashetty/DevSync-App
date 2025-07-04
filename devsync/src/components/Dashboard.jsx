@@ -20,14 +20,17 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetch("https://api.github.com/repos/vercel/next.js/issues?per_page=5")
+    fetch(
+      "http://localhost:5000/api/github/issues?repo=gehenashetty/DevSync-App"
+    )
       .then((res) => res.json())
       .then((data) => {
+        console.log("GitHub Issues Response:", data); // 👈 ADD THIS
         if (Array.isArray(data)) setGithubIssues(data);
       });
-
     fetchJira();
   }, []);
+  
 
   const fetchJira = async () => {
     const res = await fetch("http://localhost:5000/api/jira");

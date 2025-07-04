@@ -102,6 +102,29 @@ app.post("/api/jira/create", async (req, res) => {
   }
 });
 
+//github
+app.get("/api/github/issues", async (req, res) => {
+  const repo = req.query.repo || "vercel/next.js"; // fallback public repo
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${repo}/issues`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+          Accept: "application/vnd.github+json",
+        },
+      }
+    );
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error("GitHub fetch error:", err);
+    res.status(500).json({ error: "Failed to fetch GitHub issues" });
+  }
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
   console.log(`Jira proxy server running on port ${PORT}`)
