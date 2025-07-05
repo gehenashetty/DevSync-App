@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 import React from "react";
+=======
+>>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase";
 import AuthForm from "./components/AuthForm";
 import Dashboard from "./components/Dashboard";
+<<<<<<< HEAD
 import { motion } from "framer-motion";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ThemeProvider from './components/ThemeProvider';
@@ -54,10 +58,13 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+=======
+>>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4
 
 function App() {
   const [user, loading, error] = useAuthState(auth);
 
+<<<<<<< HEAD
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -114,6 +121,21 @@ function App() {
         </ErrorBoundary>
       </ToastProvider>
     </ThemeProvider>
+=======
+  if (loading)
+    return <div className="p-10 text-center text-gray-600">Loading...</div>;
+  if (error)
+    return (
+      <div className="p-10 text-center text-red-600">
+        Error: {error.message}
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-blue-100">
+      {user ? <Dashboard /> : <AuthForm />}
+    </div>
+>>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4
   );
 }
 

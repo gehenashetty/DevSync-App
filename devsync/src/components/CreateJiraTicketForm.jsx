@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Button from "./ui/Button";
@@ -6,6 +7,12 @@ import { FileText, Tag, MessageSquare, AlertTriangle } from "lucide-react";
 import "./CreateJiraTicketForm.css";
 
 const CreateJiraTicketForm = ({ onTicketCreated }) => {
+=======
+import { useState } from "react";
+import "./CreateJiraTicketForm.css"; // 💡 link to our CSS file
+
+export default function CreateJiraTicketForm({ onTicketCreated }) {
+>>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4
   const [summary, setSummary] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState(null);
@@ -16,6 +23,7 @@ const CreateJiraTicketForm = ({ onTicketCreated }) => {
     setStatus(null);
     setLoading(true);
 
+<<<<<<< HEAD
     try {
       const response = await fetch("http://localhost:5000/api/jira/create", {
         method: "POST",
@@ -56,10 +64,36 @@ const CreateJiraTicketForm = ({ onTicketCreated }) => {
       console.error('Error creating ticket:', error);
       setStatus(`⚠️ Backend server not available. Ticket would be created in real Jira when server is running.`);
       setLoading(false);
+=======
+    const response = await fetch("http://localhost:5000/api/jira/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        summary,
+        description,
+        projectKey: "MBA", // Replace with your actual key
+      }),
+    });
+
+    const result = await response.json();
+    setLoading(false);
+
+    if (result.success) {
+      setStatus(`✅ Ticket Created: ${result.issueKey}`);
+      setSummary("");
+      setDescription("");
+      if (onTicketCreated) onTicketCreated();
+    } else {
+      setStatus("❌ Failed to create ticket.");
+      console.error(result);
+>>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4
     }
   };
 
   return (
+<<<<<<< HEAD
     <Card variant="blue" className="p-6">
       <h2 className="text-xl font-display font-semibold mb-4 flex items-center">
         <FileText size={20} className="mr-2 text-accent-blue" />
@@ -131,3 +165,29 @@ const CreateJiraTicketForm = ({ onTicketCreated }) => {
 };
 
 export default CreateJiraTicketForm;
+=======
+    <div className="jira-form-container">
+      <h2>Create Jira Ticket</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={summary}
+          onChange={(e) => setSummary(e.target.value)}
+          placeholder="Enter issue summary"
+          required
+        />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Enter issue description"
+          required
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? "Creating..." : "Create Ticket"}
+        </button>
+        {status && <p className="jira-status">{status}</p>}
+      </form>
+    </div>
+  );
+}
+>>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4
