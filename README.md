@@ -60,7 +60,7 @@ npm run dev
 npm run dev:backend
 # or
 cd jiraproxy
-npm run dev
+npm start
 ```
 
 The frontend will be available at http://localhost:5173 and the backend at http://localhost:5000. 
