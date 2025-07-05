@@ -51,14 +51,10 @@ Or run them separately:
 
 ```bash
 # Frontend
-npm run dev:frontend
-# or
 cd devsync
 npm run dev
 
 # Backend
-npm run dev:backend
-# or
 cd jiraproxy
 npm start
 ```
