@@ -1338,64 +1338,101 @@ const Dashboard = () => {
     }
   };
 
-  const renderTasksContent = () => (
-    <>
-      <div className="mb-6">
-        <motion.h1
-          className="text-2xl font-display font-bold gradient-text-green mb-2"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          Task Management
-        </motion.h1>
-        <motion.p
-          className="text-text-secondary"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          Organize and track your development tasks
-        </motion.p>
-      </div>
+  // Add this state at the top of your component
+  const [activeFilter, setActiveFilter] = useState("all");
 
-      <div className="flex justify-between mb-6">
-        <div className="flex space-x-2">
-          <Button variant="secondary">All Tasks</Button>
-          <Button variant="secondary">In Progress</Button>
-          <Button variant="secondary">Completed</Button>
+  const renderTasksContent = () => {
+    // Filter tasks based on active filter
+    const filteredTasks = tasks.filter((task) => {
+      switch (activeFilter) {
+        case "in-progress":
+          return task.status === "in-progress";
+        case "completed":
+          return task.status === "completed";
+        case "all":
+        default:
+          return true;
+      }
+    });
+
+    return (
+      <>
+        <div className="mb-6">
+          <motion.h1
+            className="text-2xl font-display font-bold gradient-text-green mb-2"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            Task Management
+          </motion.h1>
+          <motion.p
+            className="text-text-secondary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            Organize and track your development tasks
+          </motion.p>
         </div>
-        {/* <Button 
+
+        <div className="flex justify-between mb-6">
+          <div className="flex space-x-2">
+            <Button
+              variant={activeFilter === "all" ? "primary" : "secondary"}
+              onClick={() => setActiveFilter("all")}
+            >
+              All Tasks
+            </Button>
+            {/* <Button
+              variant={activeFilter === "in-progress" ? "primary" : "secondary"}
+              onClick={() => setActiveFilter("in-progress")}
+            >
+              In Progress
+            </Button> */}
+            <Button
+              variant={activeFilter === "completed" ? "primary" : "secondary"}
+              onClick={() => setActiveFilter("completed")}
+            >
+              Completed
+            </Button>
+          </div>
+          {/* <Button 
           variant="primary" 
           icon={<Plus size={16} />}
           onClick={() => setShowCreateForm(true)}
         >
           Add Task
         </Button> */}
-      </div>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tasks.map((task, index) => (
-          <TaskCard
-            key={task.id}
-            {...task}
-            delay={0.1 + index * 0.05}
-            onClick={() => alert(`Viewing details for task: ${task.title}`)}
-            onStatusChange={(newStatus) => {
-              // Update task status in Firebase
-              const taskRef = doc(db, "tasks", task.id);
-              updateDoc(taskRef, { status: newStatus });
-            }}
-          />
-        ))}
-        {tasks.length === 0 && (
-          <div className="col-span-3 text-center py-8 text-text-secondary">
-            No tasks found. Create one to get started!
-          </div>
-        )}
-      </div>
-    </>
-  );
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredTasks.map((task, index) => (
+            <TaskCard
+              key={task.id}
+              {...task}
+              delay={0.1 + index * 0.05}
+              onClick={() => alert(`Viewing details for task: ${task.title}`)}
+              onStatusChange={(newStatus) => {
+                // Update task status in Firebase
+                const taskRef = doc(db, "tasks", task.id);
+                updateDoc(taskRef, { status: newStatus });
+              }}
+            />
+          ))}
+          {filteredTasks.length === 0 && (
+            <div className="col-span-3 text-center py-8 text-text-secondary">
+              {activeFilter === "all"
+                ? "No tasks found. Create one to get started!"
+                : `No ${
+                    activeFilter === "in-progress" ? "in progress" : "completed"
+                  } tasks found.`}
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
 
   const renderSettingsContent = () => (
     <>
