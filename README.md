@@ -1,62 +1,54 @@
-# DevSync App
+# 🚀 DevSync — Unified Developer Dashboard
 
-A full-stack application that integrates with Jira and GitHub APIs.
+DevSync is a sleek and powerful developer dashboard that integrates:
 
-## Setup Instructions
+- ✅ GitHub (Issues, Pull Requests, Commits)
+- 📌 Jira (Create + View Tickets)
+- 📝 Firebase Tasks (Real-time task manager)
+- 🌗 Dark mode + Activity logging
+- ⚙️ Designed for hackathons & dev teams
 
-### 1. Install Dependencies
+---
 
-First, install all dependencies for the main project, frontend, and backend:
+## ✨ Features
+
+| Feature               | Description |
+|----------------------|-------------|
+| 🔐 Auth              | Firebase email/password authentication |
+| 🔄 Real-time Tasks   | Add tasks with Firestore sync |
+| 🐙 GitHub            | Issues, PRs, and commits from selected repo |
+| 🧾 Jira              | Create + View Jira issues via secure proxy |
+| 🎨 UI/UX             | Futuristic glass UI + Tab-based layout |
+| 🌓 Dark Mode         | Persistent theme toggle |
+| 📋 Activity Log      | Auto-tracks actions in timeline |
+| 📈 Extendable        | Built for future AI plugins, charts, etc |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React, Tailwind CSS (or plain CSS)
+- **Backend (proxy)**: Express.js + Node.js
+- **Auth/DB**: Firebase Auth & Firestore
+- **APIs**: GitHub REST API & Jira Cloud API
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1. 🔧 Frontend Setup & Run
 
 ```bash
-npm run install:all
-```
-
-Or install them separately:
-
-```bash
-# Main project
-npm install
-
-# Frontend
+git clone https://github.com/gehenashetty/DevSync-App.git
 cd devsync
 npm install
-
-# Backend
-cd jiraproxy
-npm install
-```
-
-### 2. Environment Variables
-
-Create a `.env` file in the `jiraproxy` directory with the following variables:
-
-```
-JIRA_DOMAIN=your-domain.atlassian.net
-JIRA_EMAIL=your-email@example.com
-JIRA_API_TOKEN=your-jira-api-token
-GITHUB_TOKEN=your-github-token
-PORT=5000
-```
-
-### 3. Running the Application
-
-You can run both frontend and backend together:
-
-```bash
 npm run dev
 ```
 
-Or run them separately:
+### 2. 🔧 Backend Setup & Run
 
 ```bash
-# Frontend
-cd devsync
-npm run dev
-
-# Backend
-cd jiraproxy
+git clone https://github.com/gehenashetty/DevSync-App.git
+cd gitjiraproxy
+npm install
 npm start
-```
-
-The frontend will be available at http://localhost:5173 and the backend at http://localhost:5000. 
