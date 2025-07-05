@@ -3,28 +3,32 @@ DEVSYNC - Unified Developer Dashboard with GitHub Repo Summary
 Now fetches: Repo Info + Issues + Pull Requests + Commits
 */
 
-<<<<<<< HEAD
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
-import { collection, addDoc, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import CreateJiraTicketForm from "./CreateJiraTicketForm";
 import JiraTicketModal from "./jira/JiraTicketModal";
 import "./Dashboard.css";
-import DashboardLayout from '../layouts/DashboardLayout';
-import StatCard from './dashboard/StatCard';
-import JiraTicketCard from './jira/JiraTicketCard';
-import RepoCard from './github/RepoCard';
-import TaskCard from './tasks/TaskCard';
-import Card from './ui/Card';
-import Button from './ui/Button';
-import CreateActionButton from './ui/CreateActionButton';
-import { useToast } from './ui/ToastProvider';
-import TaskForm from './tasks/TaskForm';
-import AddRepoForm from './github/AddRepoForm';
-
+import DashboardLayout from "../layouts/DashboardLayout";
+import StatCard from "./dashboard/StatCard";
+import JiraTicketCard from "./jira/JiraTicketCard";
+import RepoCard from "./github/RepoCard";
+import TaskCard from "./tasks/TaskCard";
+import Card from "./ui/Card";
+import Button from "./ui/Button";
+import CreateActionButton from "./ui/CreateActionButton";
+import { useToast } from "./ui/ToastProvider";
+import TaskForm from "./tasks/TaskForm";
+import AddRepoForm from "./github/AddRepoForm";
 
 import {
   LayoutDashboard,
@@ -44,154 +48,147 @@ import {
   Moon,
   Volume2,
   VolumeX,
-  Search
-} from 'lucide-react';
-import { useTheme, useSound } from './ThemeProvider';
+  Search,
+} from "lucide-react";
+import { useTheme, useSound } from "./ThemeProvider";
 
 // Mock data - in a real app, this would come from API calls
 const mockJiraTickets = [
-  { 
-    id: 'PROJ-123', 
-    summary: 'Implement dark mode toggle', 
-    description: 'Add a comprehensive dark mode toggle feature to the application with proper theme switching and persistence.',
-    status: 'In Progress', 
-    priority: 'medium',
+  {
+    id: "PROJ-123",
+    summary: "Implement dark mode toggle",
+    description:
+      "Add a comprehensive dark mode toggle feature to the application with proper theme switching and persistence.",
+    status: "In Progress",
+    priority: "medium",
     assignee: {
-      name: 'John Doe',
-      email: 'john.doe@company.com',
-      avatar: 'JD'
+      name: "John Doe",
+      email: "john.doe@company.com",
+      avatar: "JD",
     },
-    created: '2024-01-15T10:30:00Z',
-    updated: '2024-01-20T14:45:00Z',
-    dueDate: '2024-02-01T17:00:00Z',
+    created: "2024-01-15T10:30:00Z",
+    updated: "2024-01-20T14:45:00Z",
+    dueDate: "2024-02-01T17:00:00Z",
     comments: [
       {
         id: 1,
-        content: 'Started working on the dark mode implementation. The basic structure is in place.',
-        author: 'John Doe',
-        timestamp: '2024-01-18T09:15:00Z',
-        avatar: 'JD'
-      }
-    ]
+        content:
+          "Started working on the dark mode implementation. The basic structure is in place.",
+        author: "John Doe",
+        timestamp: "2024-01-18T09:15:00Z",
+        avatar: "JD",
+      },
+    ],
   },
-  { 
-    id: 'PROJ-124', 
-    summary: 'Fix navigation responsiveness on mobile', 
-    description: 'The navigation menu is not properly responsive on mobile devices. Need to implement a hamburger menu and improve touch interactions.',
-    status: 'To Do', 
-    priority: 'high',
+  {
+    id: "PROJ-124",
+    summary: "Fix navigation responsiveness on mobile",
+    description:
+      "The navigation menu is not properly responsive on mobile devices. Need to implement a hamburger menu and improve touch interactions.",
+    status: "To Do",
+    priority: "high",
     assignee: {
-      name: 'Sarah Wilson',
-      email: 'sarah.wilson@company.com',
-      avatar: 'SW'
+      name: "Sarah Wilson",
+      email: "sarah.wilson@company.com",
+      avatar: "SW",
     },
-    created: '2024-01-16T11:20:00Z',
-    updated: '2024-01-16T11:20:00Z',
-    dueDate: '2024-01-25T17:00:00Z',
-    comments: []
+    created: "2024-01-16T11:20:00Z",
+    updated: "2024-01-16T11:20:00Z",
+    dueDate: "2024-01-25T17:00:00Z",
+    comments: [],
   },
-  { 
-    id: 'PROJ-125', 
-    summary: 'Update user profile API endpoints', 
-    description: 'The current user profile API endpoints are outdated and need to be updated to support new profile fields and improved security.',
-    status: 'In Review', 
-    priority: 'medium',
+  {
+    id: "PROJ-125",
+    summary: "Update user profile API endpoints",
+    description:
+      "The current user profile API endpoints are outdated and need to be updated to support new profile fields and improved security.",
+    status: "In Review",
+    priority: "medium",
     assignee: {
-      name: 'Mike Johnson',
-      email: 'mike.johnson@company.com',
-      avatar: 'MJ'
+      name: "Mike Johnson",
+      email: "mike.johnson@company.com",
+      avatar: "MJ",
     },
-    created: '2024-01-14T08:45:00Z',
-    updated: '2024-01-19T16:30:00Z',
-    dueDate: '2024-01-30T17:00:00Z',
+    created: "2024-01-14T08:45:00Z",
+    updated: "2024-01-19T16:30:00Z",
+    dueDate: "2024-01-30T17:00:00Z",
     comments: [
       {
         id: 1,
-        content: 'API endpoints have been updated and are ready for review.',
-        author: 'Mike Johnson',
-        timestamp: '2024-01-19T16:30:00Z',
-        avatar: 'MJ'
-      }
-    ]
+        content: "API endpoints have been updated and are ready for review.",
+        author: "Mike Johnson",
+        timestamp: "2024-01-19T16:30:00Z",
+        avatar: "MJ",
+      },
+    ],
   },
 ];
 
 const mockRepos = [
-  { 
-    name: 'frontend-app', 
-    description: 'Main frontend application repository',
+  {
+    name: "frontend-app",
+    description: "Main frontend application repository",
     stars: 24,
     forks: 8,
     watchers: 15,
-    language: 'TypeScript',
-    lastCommit: '2023-06-15',
+    language: "TypeScript",
+    lastCommit: "2023-06-15",
     openIssues: 5,
-    pullRequests: 2
+    pullRequests: 2,
   },
-  { 
-    name: 'api-service', 
-    description: 'Backend API service with authentication',
+  {
+    name: "api-service",
+    description: "Backend API service with authentication",
     stars: 18,
     forks: 5,
     watchers: 10,
-    language: 'JavaScript',
-    lastCommit: '2023-06-10',
+    language: "JavaScript",
+    lastCommit: "2023-06-10",
     openIssues: 3,
-    pullRequests: 1
-  }
+    pullRequests: 1,
+  },
 ];
 
 const mockTasks = [
   {
-    title: 'Update dashboard design',
-    description: 'Implement new UI components and layout',
-    dueDate: '2023-06-20',
-    priority: 'high',
-    status: 'in_progress',
-    tags: ['UI', 'Design'],
-    progress: 60
+    title: "Update dashboard design",
+    description: "Implement new UI components and layout",
+    dueDate: "2023-06-20",
+    priority: "high",
+    status: "in_progress",
+    tags: ["UI", "Design"],
+    progress: 60,
   },
   {
-    title: 'Fix authentication issues',
-    description: 'Resolve token refresh problems in the auth flow',
-    dueDate: '2023-06-18',
-    priority: 'high',
-    status: 'pending',
-    tags: ['Auth', 'Bug'],
-    progress: 20
+    title: "Fix authentication issues",
+    description: "Resolve token refresh problems in the auth flow",
+    dueDate: "2023-06-18",
+    priority: "high",
+    status: "pending",
+    tags: ["Auth", "Bug"],
+    progress: 20,
   },
   {
-    title: 'Write documentation',
-    description: 'Create user guide for the new features',
-    dueDate: '2023-06-25',
-    priority: 'medium',
-    status: 'pending',
-    tags: ['Docs'],
-    progress: 0
-  }
+    title: "Write documentation",
+    description: "Create user guide for the new features",
+    dueDate: "2023-06-25",
+    priority: "medium",
+    status: "pending",
+    tags: ["Docs"],
+    progress: 0,
+  },
 ];
 
 const Dashboard = () => {
   const [user] = useAuthState(auth);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [refreshing, setRefreshing] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedJiraTicket, setSelectedJiraTicket] = useState(null);
   const [showJiraModal, setShowJiraModal] = useState(false);
-  const [jiraSearchTerm, setJiraSearchTerm] = useState('');
-  const [jiraFilter, setJiraFilter] = useState('all');
-=======
-import { useState, useEffect } from "react";
-import { auth, db } from "../firebase";
-import { signOut } from "firebase/auth";
-import { collection, addDoc, onSnapshot } from "firebase/firestore";
-import CreateJiraTicketForm from "./CreateJiraTicketForm";
-import "./Dashboard.css";
-
-export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("jira");
->>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4
+  const [jiraSearchTerm, setJiraSearchTerm] = useState("");
+  const [jiraFilter, setJiraFilter] = useState("all");
   const [task, setTask] = useState("");
   const [tasks, setTasks] = useState([]);
   const [githubRepoInfo, setGithubRepoInfo] = useState(null);
@@ -202,7 +199,6 @@ export default function Dashboard() {
   const [selectedRepo, setSelectedRepo] = useState(() => {
     return localStorage.getItem("selectedRepo") || "gehenashetty/DevSync-App";
   });
-<<<<<<< HEAD
   const [githubError, setGithubError] = useState(null);
 
   // Update initial GitHub data state to have proper structure
@@ -210,7 +206,7 @@ export default function Dashboard() {
     repoInfo: null,
     issues: [],
     prs: [],
-    commits: []
+    commits: [],
   });
 
   // Add error state for API server
@@ -223,12 +219,14 @@ export default function Dashboard() {
   // Add settings state
   const [settings, setSettings] = useState(() => {
     // Load settings from localStorage or use defaults
-    const savedSettings = localStorage.getItem('devsync_settings');
-    return savedSettings ? JSON.parse(savedSettings) : {
-      darkMode: true,
-      notifications: true,
-      soundEffects: false
-    };
+    const savedSettings = localStorage.getItem("devsync_settings");
+    return savedSettings
+      ? JSON.parse(savedSettings)
+      : {
+          darkMode: true,
+          notifications: true,
+          soundEffects: false,
+        };
   });
 
   // Add state for create action modals
@@ -241,12 +239,12 @@ export default function Dashboard() {
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('devsync_settings', JSON.stringify(settings));
+    localStorage.setItem("devsync_settings", JSON.stringify(settings));
   }, [settings]);
 
   // Handle settings toggle
   const handleSettingToggle = (setting) => {
-    setSettings(prev => {
+    setSettings((prev) => {
       const newSettings = { ...prev, [setting]: !prev[setting] };
       return newSettings;
     });
@@ -254,13 +252,19 @@ export default function Dashboard() {
 
   // Get theme and sound controls
   const { isDark, toggleTheme } = useTheme();
-  const { enabled: soundEnabled, volume, toggleSound, updateVolume, playSound } = useSound();
+  const {
+    enabled: soundEnabled,
+    volume,
+    toggleSound,
+    updateVolume,
+    playSound,
+  } = useSound();
 
   // Add click sound to buttons
   const handleButtonClick = (callback) => {
     return (...args) => {
       if (soundEnabled) {
-        playSound('click');
+        playSound("click");
       }
       callback(...args);
     };
@@ -268,26 +272,30 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log("Setting up tasks listener");
-    const unsubscribe = onSnapshot(collection(db, "tasks"), (snapshot) => {
-      console.log("Tasks snapshot received:", snapshot.size, "documents");
-      const taskList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        // Ensure all required fields exist
-        title: doc.data().title || doc.data().content || "Untitled Task",
-        description: doc.data().description || "",
-        status: doc.data().status || "pending",
-        priority: doc.data().priority || "medium",
-        tags: doc.data().tags || [],
-        progress: doc.data().progress || 0,
-      }));
-      console.log("Processed tasks:", taskList);
-      setTasks(taskList);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching tasks:", error);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, "tasks"),
+      (snapshot) => {
+        console.log("Tasks snapshot received:", snapshot.size, "documents");
+        const taskList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          // Ensure all required fields exist
+          title: doc.data().title || doc.data().content || "Untitled Task",
+          description: doc.data().description || "",
+          status: doc.data().status || "pending",
+          priority: doc.data().priority || "medium",
+          tags: doc.data().tags || [],
+          progress: doc.data().progress || 0,
+        }));
+        console.log("Processed tasks:", taskList);
+        setTasks(taskList);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching tasks:", error);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
@@ -298,10 +306,7 @@ export default function Dashboard() {
     const loadInitialData = async () => {
       try {
         setInitialLoad(true);
-        await Promise.all([
-          fetchGithubData(),
-          fetchJira()
-        ]);
+        await Promise.all([fetchGithubData(), fetchJira()]);
       } catch (error) {
         console.error("Error loading initial data:", error);
       } finally {
@@ -315,7 +320,7 @@ export default function Dashboard() {
   // Update GitHub data fetching function
   const fetchGithubData = async () => {
     if (!selectedRepo) {
-      console.log('No repository selected');
+      console.log("No repository selected");
       return;
     }
 
@@ -326,54 +331,58 @@ export default function Dashboard() {
 
     try {
       // Try to fetch from the backend server first
-      const response = await fetch(`http://localhost:5000/api/github/summary?repo=${selectedRepo}`);
-      console.log('GitHub API response:', response.status);
-      
+      const response = await fetch(
+        `http://localhost:5000/api/github/summary?repo=${selectedRepo}`
+      );
+      console.log("GitHub API response:", response.status);
+
       if (response.ok) {
         const data = await response.json();
         console.log("GitHub data received:", data);
-        
+
         if (data.error) {
           throw new Error(data.error);
         }
-        
+
         // Update all GitHub data at once with proper null checks
         setGithubData({
-          repoInfo: data.repo ? {
-            name: data.repo.name,
-            description: data.repo.description,
-            stars: data.repo.stargazers_count,
-            forks: data.repo.forks_count,
-            watchers: data.repo.watchers_count,
-            language: data.repo.language,
-            lastCommit: data.repo.updated_at,
-            openIssues: data.repo.open_issues_count,
-            pullRequests: data.repo.open_issues_count, // This will be updated separately
-            html_url: data.repo.html_url
-          } : null,
+          repoInfo: data.repo
+            ? {
+                name: data.repo.name,
+                description: data.repo.description,
+                stars: data.repo.stargazers_count,
+                forks: data.repo.forks_count,
+                watchers: data.repo.watchers_count,
+                language: data.repo.language,
+                lastCommit: data.repo.updated_at,
+                openIssues: data.repo.open_issues_count,
+                pullRequests: data.repo.open_issues_count, // This will be updated separately
+                html_url: data.repo.html_url,
+              }
+            : null,
           issues: Array.isArray(data.issues) ? data.issues : [],
           prs: Array.isArray(data.pulls) ? data.pulls : [],
-          commits: Array.isArray(data.commits) ? data.commits : []
+          commits: Array.isArray(data.commits) ? data.commits : [],
         });
       } else {
         // If backend server is not available, use mock data
-        console.log('Backend server not available, using mock data');
+        console.log("Backend server not available, using mock data");
         setGithubData({
           repoInfo: {
-            name: selectedRepo.split('/')[1] || 'repository',
-            description: 'Mock repository data - backend server not running',
+            name: selectedRepo.split("/")[1] || "repository",
+            description: "Mock repository data - backend server not running",
             stars: 0,
             forks: 0,
             watchers: 0,
-            language: 'JavaScript',
+            language: "JavaScript",
             lastCommit: new Date().toISOString(),
             openIssues: 0,
             pullRequests: 0,
-            html_url: `https://github.com/${selectedRepo}`
+            html_url: `https://github.com/${selectedRepo}`,
           },
           issues: [],
           prs: [],
-          commits: []
+          commits: [],
         });
       }
     } catch (error) {
@@ -381,20 +390,20 @@ export default function Dashboard() {
       // Use mock data as fallback
       setGithubData({
         repoInfo: {
-          name: selectedRepo.split('/')[1] || 'repository',
-          description: 'Mock repository data - unable to fetch from server',
+          name: selectedRepo.split("/")[1] || "repository",
+          description: "Mock repository data - unable to fetch from server",
           stars: 0,
           forks: 0,
           watchers: 0,
-          language: 'JavaScript',
+          language: "JavaScript",
           lastCommit: new Date().toISOString(),
           openIssues: 0,
           pullRequests: 0,
-          html_url: `https://github.com/${selectedRepo}`
+          html_url: `https://github.com/${selectedRepo}`,
         },
         issues: [],
         prs: [],
-        commits: []
+        commits: [],
       });
     } finally {
       setLoading(false);
@@ -413,7 +422,7 @@ export default function Dashboard() {
         setJiraData(Array.isArray(data) ? data : []);
       } else {
         // If backend server is not available, use mock data
-        console.log('Backend server not available, using mock Jira data');
+        console.log("Backend server not available, using mock Jira data");
         setJiraData(mockJiraTickets);
       }
     } catch (error) {
@@ -429,12 +438,9 @@ export default function Dashboard() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([
-        fetchGithubData(),
-        fetchJira()
-      ]);
+      await Promise.all([fetchGithubData(), fetchJira()]);
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error("Error refreshing data:", error);
     } finally {
       setRefreshing(false);
     }
@@ -449,13 +455,13 @@ export default function Dashboard() {
 
   // Add error boundary for GitHub data
   useEffect(() => {
-    if (!githubData || typeof githubData !== 'object') {
-      console.log('Resetting invalid GitHub data');
+    if (!githubData || typeof githubData !== "object") {
+      console.log("Resetting invalid GitHub data");
       setGithubData({
         repoInfo: null,
         issues: [],
         prs: [],
-        commits: []
+        commits: [],
       });
     }
   }, [githubData]);
@@ -468,11 +474,11 @@ export default function Dashboard() {
         description: taskData.description,
         dueDate: taskData.dueDate,
         priority: taskData.priority,
-        status: 'pending',
+        status: "pending",
         tags: taskData.tags,
         progress: 0,
         user: auth.currentUser.email,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
       console.log("Task added successfully");
       setShowCreateForm(false);
@@ -485,29 +491,32 @@ export default function Dashboard() {
   const handleAddRepo = async (repoUrl) => {
     try {
       console.log("Adding new repo:", repoUrl);
-      
+
       // Validate repo URL format
-      if (!repoUrl.includes('/') || repoUrl.split('/').length !== 2) {
-        throw new Error('Please enter repository in format: owner/repository');
+      if (!repoUrl.includes("/") || repoUrl.split("/").length !== 2) {
+        throw new Error("Please enter repository in format: owner/repository");
       }
-      
+
       // Try to add via backend if available
       try {
-        const response = await fetch('http://localhost:5000/api/github/add-repo', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ repoUrl })
-        });
-        
+        const response = await fetch(
+          "http://localhost:5000/api/github/add-repo",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ repoUrl }),
+          }
+        );
+
         if (response.ok) {
-          console.log('Repository added via backend');
+          console.log("Repository added via backend");
         }
       } catch (backendError) {
-        console.log('Backend not available, using local storage only');
+        console.log("Backend not available, using local storage only");
       }
-      
+
       setSelectedRepo(repoUrl);
       localStorage.setItem("selectedRepo", repoUrl);
       handleRefresh();
@@ -519,10 +528,10 @@ export default function Dashboard() {
   };
 
   const handleTabChange = (tabId) => {
-    console.log('Changing tab to:', tabId);
-    console.log('Current githubData:', githubData);
-    console.log('Current loading state:', loading);
-    console.log('Current initialLoad state:', initialLoad);
+    console.log("Changing tab to:", tabId);
+    console.log("Current githubData:", githubData);
+    console.log("Current loading state:", loading);
+    console.log("Current initialLoad state:", initialLoad);
     setActiveTab(tabId);
   };
 
@@ -537,21 +546,17 @@ export default function Dashboard() {
   };
 
   const handleJiraStatusChange = (ticketId, newStatus) => {
-    setJiraData(prev => 
-      prev.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, status: newStatus }
-          : ticket
+    setJiraData((prev) =>
+      prev.map((ticket) =>
+        ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket
       )
     );
   };
 
   const handleJiraPriorityChange = (ticketId, newPriority) => {
-    setJiraData(prev => 
-      prev.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, priority: newPriority }
-          : ticket
+    setJiraData((prev) =>
+      prev.map((ticket) =>
+        ticket.id === ticketId ? { ...ticket, priority: newPriority } : ticket
       )
     );
   };
@@ -559,26 +564,26 @@ export default function Dashboard() {
   const handleJiraTicketUpdate = async (ticketId, updateData) => {
     try {
       // In a real app, this would make an API call to update the ticket
-      console.log('Updating ticket:', ticketId, updateData);
-      
-      setJiraData(prev => 
-        prev.map(ticket => 
-          ticket.id === ticketId 
-            ? { 
-                ...ticket, 
+      console.log("Updating ticket:", ticketId, updateData);
+
+      setJiraData((prev) =>
+        prev.map((ticket) =>
+          ticket.id === ticketId
+            ? {
+                ...ticket,
                 ...updateData,
-                updated: new Date().toISOString() // Update the timestamp
+                updated: new Date().toISOString(), // Update the timestamp
               }
             : ticket
         )
       );
-      
+
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log('Ticket updated successfully');
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Ticket updated successfully");
     } catch (error) {
-      console.error('Error updating ticket:', error);
+      console.error("Error updating ticket:", error);
       throw error;
     }
   };
@@ -590,35 +595,36 @@ export default function Dashboard() {
     // Apply search filter
     if (jiraSearchTerm) {
       const searchLower = jiraSearchTerm.toLowerCase();
-      filtered = filtered.filter(ticket => 
-        ticket.summary?.toLowerCase().includes(searchLower) ||
-        ticket.description?.toLowerCase().includes(searchLower) ||
-        ticket.id?.toLowerCase().includes(searchLower) ||
-        ticket.assignee?.name?.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(
+        (ticket) =>
+          ticket.summary?.toLowerCase().includes(searchLower) ||
+          ticket.description?.toLowerCase().includes(searchLower) ||
+          ticket.id?.toLowerCase().includes(searchLower) ||
+          ticket.assignee?.name?.toLowerCase().includes(searchLower)
       );
     }
 
     // Apply status filter
     switch (jiraFilter) {
-      case 'assigned':
-        filtered = filtered.filter(ticket => ticket.assignee?.name);
+      case "assigned":
+        filtered = filtered.filter((ticket) => ticket.assignee?.name);
         break;
-      case 'recent':
+      case "recent":
         // Show tickets updated in the last 7 days
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
-        filtered = filtered.filter(ticket => 
-          ticket.updated && new Date(ticket.updated) > weekAgo
+        filtered = filtered.filter(
+          (ticket) => ticket.updated && new Date(ticket.updated) > weekAgo
         );
         break;
-      case 'high-priority':
-        filtered = filtered.filter(ticket => 
-          ticket.priority?.toLowerCase() === 'high'
+      case "high-priority":
+        filtered = filtered.filter(
+          (ticket) => ticket.priority?.toLowerCase() === "high"
         );
         break;
-      case 'in-progress':
-        filtered = filtered.filter(ticket => 
-          ticket.status?.toLowerCase() === 'in progress'
+      case "in-progress":
+        filtered = filtered.filter(
+          (ticket) => ticket.status?.toLowerCase() === "in progress"
         );
         break;
       default:
@@ -818,7 +824,7 @@ export default function Dashboard() {
   const renderJiraContent = () => (
     <>
       <div className="mb-6">
-        <motion.h1 
+        <motion.h1
           className="text-2xl font-display font-bold gradient-text-blue mb-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -826,7 +832,7 @@ export default function Dashboard() {
         >
           Jira Tickets
         </motion.h1>
-        <motion.p 
+        <motion.p
           className="text-text-secondary"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -848,13 +854,16 @@ export default function Dashboard() {
               onChange={(e) => setJiraSearchTerm(e.target.value)}
               className="w-full bg-background border border-white/10 rounded-lg py-2 px-4 pl-10 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue"
             />
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary"
+            />
           </div>
           {jiraSearchTerm && (
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setJiraSearchTerm('')}
+              onClick={() => setJiraSearchTerm("")}
             >
               Clear
             </Button>
@@ -864,33 +873,33 @@ export default function Dashboard() {
         {/* Filter Buttons */}
         <div className="flex justify-between items-center">
           <div className="flex space-x-2">
-            <Button 
-              variant={jiraFilter === 'all' ? 'primary' : 'secondary'}
-              onClick={() => setJiraFilter('all')}
+            <Button
+              variant={jiraFilter === "all" ? "primary" : "secondary"}
+              onClick={() => setJiraFilter("all")}
             >
               All Tickets
             </Button>
-            <Button 
-              variant={jiraFilter === 'assigned' ? 'primary' : 'secondary'}
-              onClick={() => setJiraFilter('assigned')}
+            <Button
+              variant={jiraFilter === "assigned" ? "primary" : "secondary"}
+              onClick={() => setJiraFilter("assigned")}
             >
               Assigned to Me
             </Button>
-            <Button 
-              variant={jiraFilter === 'recent' ? 'primary' : 'secondary'}
-              onClick={() => setJiraFilter('recent')}
+            <Button
+              variant={jiraFilter === "recent" ? "primary" : "secondary"}
+              onClick={() => setJiraFilter("recent")}
             >
               Recent
             </Button>
-            <Button 
-              variant={jiraFilter === 'high-priority' ? 'primary' : 'secondary'}
-              onClick={() => setJiraFilter('high-priority')}
+            <Button
+              variant={jiraFilter === "high-priority" ? "primary" : "secondary"}
+              onClick={() => setJiraFilter("high-priority")}
             >
               High Priority
             </Button>
-            <Button 
-              variant={jiraFilter === 'in-progress' ? 'primary' : 'secondary'}
-              onClick={() => setJiraFilter('in-progress')}
+            <Button
+              variant={jiraFilter === "in-progress" ? "primary" : "secondary"}
+              onClick={() => setJiraFilter("in-progress")}
             >
               In Progress
             </Button>
@@ -905,11 +914,12 @@ export default function Dashboard() {
         </div>
 
         {/* Results Summary */}
-        {jiraSearchTerm || jiraFilter !== 'all' ? (
+        {jiraSearchTerm || jiraFilter !== "all" ? (
           <div className="text-sm text-text-secondary">
-            Showing {getFilteredJiraTickets().length} of {jiraData.length} tickets
+            Showing {getFilteredJiraTickets().length} of {jiraData.length}{" "}
+            tickets
             {jiraSearchTerm && ` matching "${jiraSearchTerm}"`}
-            {jiraFilter !== 'all' && ` (${jiraFilter.replace('-', ' ')})`}
+            {jiraFilter !== "all" && ` (${jiraFilter.replace("-", " ")})`}
           </div>
         ) : null}
       </div>
@@ -922,7 +932,8 @@ export default function Dashboard() {
         <>
           {jiraData === mockJiraTickets && (
             <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 rounded-lg text-sm">
-              <strong>Note:</strong> Using mock Jira data. To connect to real Jira, start the backend server.
+              <strong>Note:</strong> Using mock Jira data. To connect to real
+              Jira, start the backend server.
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -930,7 +941,7 @@ export default function Dashboard() {
               <JiraTicketCard
                 key={`${ticket.id}-${index}`}
                 {...ticket}
-                delay={0.1 + (index * 0.05)}
+                delay={0.1 + index * 0.05}
                 onClick={() => handleJiraTicketClick(ticket)}
               />
             ))}
@@ -947,12 +958,12 @@ export default function Dashboard() {
 
   const renderGithubContent = () => {
     try {
-      console.log('Rendering GitHub content', {
+      console.log("Rendering GitHub content", {
         loading,
         error: githubError,
         apiError: apiServerError,
         githubData,
-        initialLoad
+        initialLoad,
       });
 
       // Safely destructure githubData with fallbacks
@@ -962,11 +973,16 @@ export default function Dashboard() {
       const commits = githubData?.commits || [];
 
       // If no data at all, show a message
-      if (!repoInfo && issues.length === 0 && prs.length === 0 && commits.length === 0) {
+      if (
+        !repoInfo &&
+        issues.length === 0 &&
+        prs.length === 0 &&
+        commits.length === 0
+      ) {
         return (
           <div className="min-h-screen p-6">
             <div className="mb-6">
-              <motion.h1 
+              <motion.h1
                 className="text-2xl font-display font-bold gradient-text-purple mb-2"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -974,7 +990,7 @@ export default function Dashboard() {
               >
                 GitHub Repositories
               </motion.h1>
-              <motion.p 
+              <motion.p
                 className="text-text-secondary"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -986,7 +1002,7 @@ export default function Dashboard() {
 
             <div className="flex justify-between mb-6">
               <div className="flex space-x-2">
-                <Button 
+                <Button
                   variant="secondary"
                   onClick={handleRefresh}
                   disabled={loading}
@@ -994,8 +1010,8 @@ export default function Dashboard() {
                   {loading ? "Loading..." : "Refresh"}
                 </Button>
               </div>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 icon={<Plus size={16} />}
                 onClick={() => setShowCreateForm(true)}
               >
@@ -1005,11 +1021,14 @@ export default function Dashboard() {
 
             <div className="text-center py-12">
               <div className="bg-background-lighter p-8 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">No Repository Selected</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  No Repository Selected
+                </h3>
                 <p className="text-text-secondary mb-4">
-                  Add a GitHub repository to get started with monitoring and management.
+                  Add a GitHub repository to get started with monitoring and
+                  management.
                 </p>
-                <Button 
+                <Button
                   variant="primary"
                   onClick={() => setShowCreateForm(true)}
                 >
@@ -1033,10 +1052,14 @@ export default function Dashboard() {
         return (
           <div className="min-h-screen p-6">
             <div className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Backend Server Not Available</h3>
+              <h3 className="font-semibold mb-2">
+                Backend Server Not Available
+              </h3>
               <p>Using mock data. To get real GitHub data:</p>
               <div className="mt-4 p-4 bg-background-lighter rounded-lg">
-                <p className="text-sm mb-2">To enable real GitHub integration:</p>
+                <p className="text-sm mb-2">
+                  To enable real GitHub integration:
+                </p>
                 <ol className="list-decimal list-inside text-sm space-y-1">
                   <li>Open a new terminal</li>
                   <li>Navigate to the jiraproxy directory</li>
@@ -1046,8 +1069,8 @@ export default function Dashboard() {
                   <li>Click the refresh button above</li>
                 </ol>
               </div>
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 className="mt-4"
                 onClick={handleRefresh}
               >
@@ -1063,9 +1086,12 @@ export default function Dashboard() {
           <div className="min-h-screen p-6">
             <div className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Using Mock Data</h3>
-              <p>Unable to fetch real GitHub data. Displaying mock repository information.</p>
-              <Button 
-                variant="secondary" 
+              <p>
+                Unable to fetch real GitHub data. Displaying mock repository
+                information.
+              </p>
+              <Button
+                variant="secondary"
                 className="mt-4"
                 onClick={handleRefresh}
               >
@@ -1079,7 +1105,7 @@ export default function Dashboard() {
       return (
         <div className="min-h-screen pb-8">
           <div className="mb-6">
-            <motion.h1 
+            <motion.h1
               className="text-2xl font-display font-bold gradient-text-purple mb-2"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1087,7 +1113,7 @@ export default function Dashboard() {
             >
               GitHub Repositories
             </motion.h1>
-            <motion.p 
+            <motion.p
               className="text-text-secondary"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1099,7 +1125,7 @@ export default function Dashboard() {
 
           <div className="flex justify-between mb-6">
             <div className="flex space-x-2">
-              <Button 
+              <Button
                 variant="secondary"
                 onClick={handleRefresh}
                 disabled={loading}
@@ -1135,7 +1161,9 @@ export default function Dashboard() {
                   openIssues={repoInfo.openIssues}
                   pullRequests={repoInfo.pullRequests}
                   delay={0.1}
-                  onClick={() => window.open(`https://github.com/${selectedRepo}`, '_blank')}
+                  onClick={() =>
+                    window.open(`https://github.com/${selectedRepo}`, "_blank")
+                  }
                 />
               ) : (
                 <div className="col-span-2 text-center py-8 text-text-secondary">
@@ -1146,33 +1174,49 @@ export default function Dashboard() {
 
             {repoInfo && (
               <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4">Repository Activity</h2>
-                
+                <h2 className="text-xl font-semibold mb-4">
+                  Repository Activity
+                </h2>
+
                 {/* Pull Requests */}
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 flex items-center">
-                    <GitPullRequest size={18} className="mr-2 text-accent-purple" />
+                    <GitPullRequest
+                      size={18}
+                      className="mr-2 text-accent-purple"
+                    />
                     Pull Requests
                   </h3>
                   <div className="space-y-2">
-                    {Array.isArray(prs) && prs.length > 0 ? prs.map(pr => (
-                      <Card key={pr.id} className="p-4 hover:bg-white/5 transition-colors">
-                        <div className="flex items-center">
-                          <GitPullRequest size={16} className="text-accent-purple mr-2" />
-                          <a 
-                            href={pr.html_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="hover:text-accent-purple"
-                          >
-                            {pr.title || 'Untitled PR'}
-                          </a>
-                        </div>
-                        <div className="text-sm text-text-secondary mt-1">
-                          #{pr.number || 'Unknown'} opened by {typeof pr.user === 'object' ? pr.user?.login || 'Unknown' : pr.user || 'Unknown'}
-                        </div>
-                      </Card>
-                    )) : (
+                    {Array.isArray(prs) && prs.length > 0 ? (
+                      prs.map((pr) => (
+                        <Card
+                          key={pr.id}
+                          className="p-4 hover:bg-white/5 transition-colors"
+                        >
+                          <div className="flex items-center">
+                            <GitPullRequest
+                              size={16}
+                              className="text-accent-purple mr-2"
+                            />
+                            <a
+                              href={pr.html_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-accent-purple"
+                            >
+                              {pr.title || "Untitled PR"}
+                            </a>
+                          </div>
+                          <div className="text-sm text-text-secondary mt-1">
+                            #{pr.number || "Unknown"} opened by{" "}
+                            {typeof pr.user === "object"
+                              ? pr.user?.login || "Unknown"
+                              : pr.user || "Unknown"}
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
                       <div className="text-center py-4 text-text-secondary">
                         No pull requests found
                       </div>
@@ -1187,24 +1231,35 @@ export default function Dashboard() {
                     Issues
                   </h3>
                   <div className="space-y-2">
-                    {Array.isArray(issues) && issues.length > 0 ? issues.map(issue => (
-                      <Card key={issue.id} className="p-4 hover:bg-white/5 transition-colors">
-                        <div className="flex items-center">
-                          <AlertCircle size={16} className="text-accent-blue mr-2" />
-                          <a 
-                            href={issue.html_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="hover:text-accent-blue"
-                          >
-                            {issue.title || 'Untitled Issue'}
-                          </a>
-                        </div>
-                        <div className="text-sm text-text-secondary mt-1">
-                          #{issue.number || 'Unknown'} opened by {typeof issue.user === 'object' ? issue.user?.login || 'Unknown' : issue.user || 'Unknown'}
-                        </div>
-                      </Card>
-                    )) : (
+                    {Array.isArray(issues) && issues.length > 0 ? (
+                      issues.map((issue) => (
+                        <Card
+                          key={issue.id}
+                          className="p-4 hover:bg-white/5 transition-colors"
+                        >
+                          <div className="flex items-center">
+                            <AlertCircle
+                              size={16}
+                              className="text-accent-blue mr-2"
+                            />
+                            <a
+                              href={issue.html_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-accent-blue"
+                            >
+                              {issue.title || "Untitled Issue"}
+                            </a>
+                          </div>
+                          <div className="text-sm text-text-secondary mt-1">
+                            #{issue.number || "Unknown"} opened by{" "}
+                            {typeof issue.user === "object"
+                              ? issue.user?.login || "Unknown"
+                              : issue.user || "Unknown"}
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
                       <div className="text-center py-4 text-text-secondary">
                         No issues found
                       </div>
@@ -1219,19 +1274,36 @@ export default function Dashboard() {
                     Recent Commits
                   </h3>
                   <div className="space-y-2">
-                    {Array.isArray(commits) && commits.length > 0 ? commits.map(commit => (
-                      <Card key={commit.sha} className="p-4 hover:bg-white/5 transition-colors">
-                        <div className="flex items-center">
-                          <FileCode2 size={16} className="text-accent-green mr-2" />
-                          <span className="font-mono text-sm">{commit.sha?.substring(0, 7) || 'Unknown'}</span>
-                          <span className="mx-2">-</span>
-                          <span>{commit.message || 'No message'}</span>
-                        </div>
-                        <div className="text-sm text-text-secondary mt-1">
-                          by {typeof commit.author === 'object' ? commit.author?.login || 'Unknown' : commit.author || 'Unknown'} on {commit.date ? new Date(commit.date).toLocaleDateString() : 'Unknown date'}
-                        </div>
-                      </Card>
-                    )) : (
+                    {Array.isArray(commits) && commits.length > 0 ? (
+                      commits.map((commit) => (
+                        <Card
+                          key={commit.sha}
+                          className="p-4 hover:bg-white/5 transition-colors"
+                        >
+                          <div className="flex items-center">
+                            <FileCode2
+                              size={16}
+                              className="text-accent-green mr-2"
+                            />
+                            <span className="font-mono text-sm">
+                              {commit.sha?.substring(0, 7) || "Unknown"}
+                            </span>
+                            <span className="mx-2">-</span>
+                            <span>{commit.message || "No message"}</span>
+                          </div>
+                          <div className="text-sm text-text-secondary mt-1">
+                            by{" "}
+                            {typeof commit.author === "object"
+                              ? commit.author?.login || "Unknown"
+                              : commit.author || "Unknown"}{" "}
+                            on{" "}
+                            {commit.date
+                              ? new Date(commit.date).toLocaleDateString()
+                              : "Unknown date"}
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
                       <div className="text-center py-4 text-text-secondary">
                         No commits found
                       </div>
@@ -1244,14 +1316,17 @@ export default function Dashboard() {
         </div>
       );
     } catch (error) {
-      console.error('Error rendering GitHub content:', error);
+      console.error("Error rendering GitHub content:", error);
       return (
         <div className="min-h-screen p-6">
           <div className="bg-red-500/20 border border-red-500/30 text-red-300 p-4 rounded-lg">
             <h3 className="font-semibold mb-2">Error Loading GitHub Content</h3>
-            <p>Something went wrong while loading the GitHub tab. Please try refreshing the page.</p>
-            <Button 
-              variant="secondary" 
+            <p>
+              Something went wrong while loading the GitHub tab. Please try
+              refreshing the page.
+            </p>
+            <Button
+              variant="secondary"
               className="mt-4"
               onClick={handleRefresh}
             >
@@ -1266,7 +1341,7 @@ export default function Dashboard() {
   const renderTasksContent = () => (
     <>
       <div className="mb-6">
-        <motion.h1 
+        <motion.h1
           className="text-2xl font-display font-bold gradient-text-green mb-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1274,7 +1349,7 @@ export default function Dashboard() {
         >
           Task Management
         </motion.h1>
-        <motion.p 
+        <motion.p
           className="text-text-secondary"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1304,7 +1379,7 @@ export default function Dashboard() {
           <TaskCard
             key={task.id}
             {...task}
-            delay={0.1 + (index * 0.05)}
+            delay={0.1 + index * 0.05}
             onClick={() => alert(`Viewing details for task: ${task.title}`)}
             onStatusChange={(newStatus) => {
               // Update task status in Firebase
@@ -1325,7 +1400,7 @@ export default function Dashboard() {
   const renderSettingsContent = () => (
     <>
       <div className="mb-6">
-        <motion.h1 
+        <motion.h1
           className="text-2xl font-display font-bold gradient-text-blue mb-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1333,7 +1408,7 @@ export default function Dashboard() {
         >
           Settings
         </motion.h1>
-        <motion.p 
+        <motion.p
           className="text-text-secondary"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1351,25 +1426,29 @@ export default function Dashboard() {
           </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-text-secondary mb-1">Display Name</label>
-              <input 
-                type="text" 
+              <label className="block text-sm text-text-secondary mb-1">
+                Display Name
+              </label>
+              <input
+                type="text"
                 className="w-full bg-background-lighter border border-white/10 rounded-lg py-2 px-3"
-                defaultValue={user?.displayName || 'User'}
+                defaultValue={user?.displayName || "User"}
               />
             </div>
             <div>
-              <label className="block text-sm text-text-secondary mb-1">Email</label>
-              <input 
-                type="email" 
+              <label className="block text-sm text-text-secondary mb-1">
+                Email
+              </label>
+              <input
+                type="email"
                 className="w-full bg-background-lighter border border-white/10 rounded-lg py-2 px-3"
-                defaultValue={user?.email || 'user@example.com'}
+                defaultValue={user?.email || "user@example.com"}
                 disabled
               />
             </div>
-            <Button 
+            <Button
               variant="primary"
-              onClick={handleButtonClick(() => alert('Profile updated!'))}
+              onClick={handleButtonClick(() => alert("Profile updated!"))}
             >
               Update Profile
             </Button>
@@ -1386,12 +1465,16 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-medium">Theme</span>
-                <p className="text-sm text-text-secondary">Switch between dark and light mode</p>
+                <p className="text-sm text-text-secondary">
+                  Switch between dark and light mode
+                </p>
               </div>
               <button
                 onClick={handleButtonClick(toggleTheme)}
                 className="theme-toggle-btn"
-                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-label={
+                  isDark ? "Switch to light mode" : "Switch to dark mode"
+                }
               >
                 {isDark ? (
                   <Sun size={20} className="text-yellow-400" />
@@ -1405,12 +1488,14 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-medium">Sound Effects</span>
-                <p className="text-sm text-text-secondary">Enable interface sounds</p>
+                <p className="text-sm text-text-secondary">
+                  Enable interface sounds
+                </p>
               </div>
               <button
                 onClick={handleButtonClick(toggleSound)}
                 className="theme-toggle-btn"
-                aria-label={soundEnabled ? 'Disable sounds' : 'Enable sounds'}
+                aria-label={soundEnabled ? "Disable sounds" : "Enable sounds"}
               >
                 {soundEnabled ? (
                   <Volume2 size={20} className="text-accent-blue" />
@@ -1444,11 +1529,11 @@ export default function Dashboard() {
             )}
 
             <div className="pt-4">
-              <Button 
+              <Button
                 variant="primary"
                 onClick={handleButtonClick(() => {
-                  playSound('success');
-                  alert('Settings saved successfully!');
+                  playSound("success");
+                  alert("Settings saved successfully!");
                 })}
               >
                 Save Settings
@@ -1466,13 +1551,17 @@ export default function Dashboard() {
             <div className="p-4 border border-white/10 rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium">Jira Integration</h3>
-                <span className="px-2 py-0.5 text-xs bg-accent-green/20 text-accent-green-light rounded-full">Connected</span>
+                <span className="px-2 py-0.5 text-xs bg-accent-green/20 text-accent-green-light rounded-full">
+                  Connected
+                </span>
               </div>
-              <p className="text-sm text-text-secondary mb-3">Connected to Jira Cloud</p>
-              <Button 
-                variant="secondary" 
+              <p className="text-sm text-text-secondary mb-3">
+                Connected to Jira Cloud
+              </p>
+              <Button
+                variant="secondary"
                 size="sm"
-                onClick={handleButtonClick(() => alert('Jira disconnected!'))}
+                onClick={handleButtonClick(() => alert("Jira disconnected!"))}
               >
                 Disconnect
               </Button>
@@ -1480,13 +1569,17 @@ export default function Dashboard() {
             <div className="p-4 border border-white/10 rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium">GitHub Integration</h3>
-                <span className="px-2 py-0.5 text-xs bg-accent-green/20 text-accent-green-light rounded-full">Connected</span>
+                <span className="px-2 py-0.5 text-xs bg-accent-green/20 text-accent-green-light rounded-full">
+                  Connected
+                </span>
               </div>
-              <p className="text-sm text-text-secondary mb-3">Connected to GitHub</p>
-              <Button 
-                variant="secondary" 
+              <p className="text-sm text-text-secondary mb-3">
+                Connected to GitHub
+              </p>
+              <Button
+                variant="secondary"
                 size="sm"
-                onClick={handleButtonClick(() => alert('GitHub disconnected!'))}
+                onClick={handleButtonClick(() => alert("GitHub disconnected!"))}
               >
                 Disconnect
               </Button>
@@ -1498,43 +1591,39 @@ export default function Dashboard() {
   );
 
   const renderContent = () => {
-    console.log('Rendering content for tab:', activeTab);
-    console.log('Current state:', {
+    console.log("Rendering content for tab:", activeTab);
+    console.log("Current state:", {
       loading,
       initialLoad,
       githubData,
       githubError,
-      apiServerError
+      apiServerError,
     });
     try {
       switch (activeTab) {
-        case 'jira':
-          console.log('Rendering Jira content');
+        case "jira":
+          console.log("Rendering Jira content");
           return renderJiraContent();
-        case 'github':
-          console.log('Rendering GitHub content');
+        case "github":
+          console.log("Rendering GitHub content");
           return renderGithubContent();
-        case 'tasks':
-          console.log('Rendering Tasks content');
+        case "tasks":
+          console.log("Rendering Tasks content");
           return renderTasksContent();
-        case 'settings':
-          console.log('Rendering Settings content');
+        case "settings":
+          console.log("Rendering Settings content");
           return renderSettingsContent();
         default:
-          console.log('Rendering Dashboard content');
+          console.log("Rendering Dashboard content");
           return renderDashboardContent();
       }
     } catch (error) {
-      console.error('Error rendering content:', error);
+      console.error("Error rendering content:", error);
       return (
         <div className="bg-red-500/20 border border-red-500/30 text-red-300 p-4 rounded-lg">
           <h3 className="font-semibold mb-2">Error displaying content</h3>
           <p>{error.message}</p>
-          <Button 
-            variant="secondary" 
-            className="mt-4"
-            onClick={handleRefresh}
-          >
+          <Button variant="secondary" className="mt-4" onClick={handleRefresh}>
             Try Again
           </Button>
         </div>
@@ -1553,28 +1642,39 @@ export default function Dashboard() {
         onPriorityChange={handleJiraPriorityChange}
         onTicketUpdate={handleJiraTicketUpdate}
       />
-      
-      {showCreateForm && activeTab === 'jira' && (
+
+      {showCreateForm && activeTab === "jira" && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background-lighter p-6 rounded-lg w-full max-w-lg">
-            <CreateJiraTicketForm onTicketCreated={() => {
-              setShowCreateForm(false);
-              handleRefresh();
-            }} />
-            <Button variant="secondary" onClick={() => setShowCreateForm(false)}>Cancel</Button>
+            <CreateJiraTicketForm
+              onTicketCreated={() => {
+                setShowCreateForm(false);
+                handleRefresh();
+              }}
+            />
+            <Button
+              variant="secondary"
+              onClick={() => setShowCreateForm(false)}
+            >
+              Cancel
+            </Button>
           </div>
         </div>
       )}
-      
-      {showCreateForm && activeTab === 'github' && (
+
+      {showCreateForm && activeTab === "github" && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background-lighter p-6 rounded-lg w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4">Add GitHub Repository</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const repoUrl = e.target.repoUrl.value;
-              handleAddRepo(repoUrl);
-            }}>
+            <h2 className="text-xl font-semibold mb-4">
+              Add GitHub Repository
+            </h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const repoUrl = e.target.repoUrl.value;
+                handleAddRepo(repoUrl);
+              }}
+            >
               <input
                 type="text"
                 name="repoUrl"
@@ -1583,28 +1683,40 @@ export default function Dashboard() {
                 required
               />
               <div className="flex justify-end space-x-2">
-                <Button variant="secondary" onClick={() => setShowCreateForm(false)}>Cancel</Button>
-                <Button type="submit" variant="primary">Add Repository</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary">
+                  Add Repository
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
-      
-      {showCreateForm && activeTab === 'tasks' && (
+
+      {showCreateForm && activeTab === "tasks" && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background-lighter p-6 rounded-lg w-full max-w-lg">
             <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleAddTask({
-                title: e.target.title.value,
-                description: e.target.description.value,
-                dueDate: e.target.dueDate.value,
-                priority: e.target.priority.value,
-                tags: e.target.tags.value.split(',').map(tag => tag.trim()).filter(Boolean)
-              });
-            }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddTask({
+                  title: e.target.title.value,
+                  description: e.target.description.value,
+                  dueDate: e.target.dueDate.value,
+                  priority: e.target.priority.value,
+                  tags: e.target.tags.value
+                    .split(",")
+                    .map((tag) => tag.trim())
+                    .filter(Boolean),
+                });
+              }}
+            >
               <div className="space-y-4">
                 <input
                   type="text"
@@ -1641,8 +1753,15 @@ export default function Dashboard() {
                   className="w-full bg-background border border-white/10 rounded-lg py-2 px-3"
                 />
                 <div className="flex justify-end space-x-2">
-                  <Button variant="secondary" onClick={() => setShowCreateForm(false)}>Cancel</Button>
-                  <Button type="submit" variant="primary">Create Task</Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowCreateForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    Create Task
+                  </Button>
                 </div>
               </div>
             </form>
@@ -1672,17 +1791,17 @@ export default function Dashboard() {
     try {
       await addDoc(collection(db, "tasks"), taskData);
       setShowCreateTaskForm(false);
-      showToast('Task created successfully!', 'success');
+      showToast("Task created successfully!", "success");
     } catch (error) {
       console.error("Error adding task:", error);
-      showToast('Failed to create task', 'error');
+      showToast("Failed to create task", "error");
     }
   };
 
   // Handle Jira ticket submission
   const handleJiraTicketSubmit = () => {
     setShowCreateJiraForm(false);
-    showToast('Jira ticket created successfully!', 'success');
+    showToast("Jira ticket created successfully!", "success");
   };
 
   // Handle GitHub repo submission
@@ -1692,10 +1811,13 @@ export default function Dashboard() {
       setSelectedRepo(repoPath);
       setShowAddRepoForm(false);
       await fetchGithubData();
-      showToast(`GitHub repository "${repoPath}" connected successfully!`, 'success');
+      showToast(
+        `GitHub repository "${repoPath}" connected successfully!`,
+        "success"
+      );
     } catch (error) {
       console.error("Error adding repo:", error);
-      showToast('Failed to connect GitHub repository', 'error');
+      showToast("Failed to connect GitHub repository", "error");
     }
   };
 
@@ -1710,7 +1832,7 @@ export default function Dashboard() {
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4"
         >
           <div className="w-full max-w-lg">
-            <TaskForm 
+            <TaskForm
               onSubmit={handleTaskSubmit}
               onCancel={() => setShowCreateTaskForm(false)}
             />
@@ -1739,7 +1861,7 @@ export default function Dashboard() {
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4"
         >
           <div className="w-full max-w-lg">
-            <AddRepoForm 
+            <AddRepoForm
               onSubmit={handleRepoSubmit}
               onCancel={() => setShowAddRepoForm(false)}
             />
@@ -1758,15 +1880,15 @@ export default function Dashboard() {
     >
       <div className="dashboard-container mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <motion.h1 
+          <motion.h1
             className="text-3xl font-display font-bold gradient-text-blue mb-1"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Welcome back, {user?.displayName || 'Developer'}
+            Welcome back, {user?.displayName || "Developer"}
           </motion.h1>
-          <motion.p 
+          <motion.p
             className="text-text-secondary"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1775,36 +1897,47 @@ export default function Dashboard() {
             Here's your development activity overview
           </motion.p>
         </div>
-        
-        <motion.div 
+
+        <motion.div
           className="flex space-x-3 mt-4 lg:mt-0"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <Button 
-            variant="secondary" 
-            icon={<RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />}
+          <Button
+            variant="secondary"
+            icon={
+              <RefreshCw
+                size={16}
+                className={refreshing ? "animate-spin" : ""}
+              />
+            }
             onClick={handleRefresh}
             disabled={refreshing}
           >
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
-          
-          {(activeTab === 'jira' || activeTab === 'github' || activeTab === 'tasks') && (
-            <Button 
-              variant="primary" 
+
+          {(activeTab === "jira" ||
+            activeTab === "github" ||
+            activeTab === "tasks") && (
+            <Button
+              variant="primary"
               icon={<Plus size={16} />}
               onClick={() => setShowCreateForm(true)}
             >
-              {activeTab === 'jira' ? 'New Ticket' : 
-               activeTab === 'github' ? 'Add Repo' : 
-               activeTab === 'tasks' ? 'New Task' : 'New Item'}
+              {activeTab === "jira"
+                ? "New Ticket"
+                : activeTab === "github"
+                ? "Add Repo"
+                : activeTab === "tasks"
+                ? "New Task"
+                : "New Item"}
             </Button>
           )}
         </motion.div>
       </div>
-      
+
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -1820,7 +1953,7 @@ export default function Dashboard() {
 
       {/* Render modals */}
       {renderModals()}
-      
+
       {/* Create action button and modals */}
       <CreateActionButton
         onCreateTask={handleCreateTask}
@@ -1833,224 +1966,3 @@ export default function Dashboard() {
 };
 
 export default Dashboard;
-=======
-
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, "tasks"), (snapshot) => {
-      setTasks(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    });
-    return () => unsub();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedRepo) return;
-
-    // fetch GitHub data (issues + PRs + commits + metadata)
-    fetch(`http://localhost:5000/api/github/summary?repo=${selectedRepo}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.repo) setGithubRepoInfo(data.repo);
-        if (Array.isArray(data.issues)) setGithubIssues(data.issues);
-        if (Array.isArray(data.pulls)) setGithubPRs(data.pulls);
-        if (Array.isArray(data.commits)) setGithubCommits(data.commits);
-      });
-
-    fetchJira();
-  }, [selectedRepo]);
-
-  const fetchJira = async () => {
-    const res = await fetch("http://localhost:5000/api/jira");
-    const data = await res.json();
-    setJiraData(data);
-  };
-
-  const handleAdd = async () => {
-    if (!task.trim()) return;
-    await addDoc(collection(db, "tasks"), {
-      content: task,
-      user: auth.currentUser.email,
-    });
-    setTask("");
-  };
-
-  return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>🚀 DevSync Dashboard</h1>
-        <button onClick={() => signOut(auth)}>Logout</button>
-      </div>
-
-      {/* 🔘 Tabs */}
-      <div className="tab-nav">
-        <button
-          onClick={() => setActiveTab("jira")}
-          className={activeTab === "jira" ? "active" : ""}
-        >
-          Jira
-        </button>
-        <button
-          onClick={() => setActiveTab("github")}
-          className={activeTab === "github" ? "active" : ""}
-        >
-          GitHub
-        </button>
-        <button
-          onClick={() => setActiveTab("tasks")}
-          className={activeTab === "tasks" ? "active" : ""}
-        >
-          Tasks
-        </button>
-      </div>
-
-      {/* 📌 Jira Section */}
-      {activeTab === "jira" && (
-        <div className="section">
-          <h2
-            style={{ fontSize: "18px", color: "#1d4ed8", marginBottom: "10px" }}
-          >
-            ➕ Create Jira Ticket
-          </h2>
-          <CreateJiraTicketForm onTicketCreated={fetchJira} />
-
-          <div style={{ marginTop: "30px" }}>
-            <h2
-              style={{
-                fontSize: "18px",
-                color: "#1d4ed8",
-                marginBottom: "10px",
-              }}
-            >
-              📋 All Jira Tickets
-            </h2>
-            {jiraData.length > 0 ? (
-              <ul>
-                {jiraData.map((item) => (
-                  <li key={item.id}>
-                    <strong>{item.id}</strong>: {item.summary}{" "}
-                    <span className="ticket-status">({item.status})</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No tickets found.</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 🐙 GitHub Section */}
-      {activeTab === "github" && (
-        <div className="section">
-          <h2>🐙 GitHub Summary</h2>
-
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ fontWeight: "bold", marginRight: "10px" }}>
-              🔽 Select GitHub Repo:
-            </label>
-            <input
-              type="text"
-              value={selectedRepo}
-              onChange={(e) => {
-                const val = e.target.value.trim();
-                setSelectedRepo(val);
-                localStorage.setItem("selectedRepo", val);
-              }}
-              placeholder="e.g. vercel/next.js"
-              style={{
-                padding: "6px 10px",
-                borderRadius: "8px",
-                border: "1px solid #ccc",
-                fontSize: "14px",
-                width: "250px",
-              }}
-            />
-          </div>
-
-          {/* Repo Info */}
-          {githubRepoInfo && (
-            <div style={{ marginBottom: "20px" }}>
-              <h3>{githubRepoInfo.full_name}</h3>
-              <p>{githubRepoInfo.description}</p>
-              <p>
-                🌟 {githubRepoInfo.stargazers_count} | 🍴{" "}
-                {githubRepoInfo.forks_count} | 👁 {githubRepoInfo.watchers_count}
-              </p>
-            </div>
-          )}
-
-          {/* PRs */}
-          <div style={{ marginBottom: "20px" }}>
-            <h3>🔁 Pull Requests</h3>
-            <ul>
-              {githubPRs.map((pr) => (
-                <li key={pr.id}>
-                  <a href={pr.html_url} target="_blank" rel="noreferrer">
-                    #{pr.number}: {pr.title}
-                  </a>{" "}
-                  - by {pr.user.login}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Issues */}
-          <div style={{ marginBottom: "20px" }}>
-            <h3>🐞 Issues</h3>
-            <ul>
-              {githubIssues.map((item) => (
-                <li key={item.id}>
-                  <a href={item.html_url} target="_blank" rel="noreferrer">
-                    #{item.number}: {item.title}
-                  </a>
-                  <p>By {item.user.login}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Commits */}
-          <div>
-            <h3>🧑‍💻 Recent Commits</h3>
-            <ul>
-              {githubCommits.map((commit) => (
-                <li key={commit.sha}>
-                  <a href={commit.html_url} target="_blank" rel="noreferrer">
-                    {commit.commit.message}
-                  </a>{" "}
-                  -{" "}
-                  {commit.author
-                    ? commit.author.login
-                    : commit.commit.author.name}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* ✅ Tasks */}
-      {activeTab === "tasks" && (
-        <div className="section">
-          <h2>📝 Live Tasks</h2>
-          <div className="task-section">
-            <input
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              placeholder="Enter new task"
-            />
-            <button onClick={handleAdd}>Add Task</button>
-          </div>
-          <ul>
-            {tasks.map((t) => (
-              <li key={t.id}>
-                <span>{t.content}</span>
-                <span className="user-email">{t.user}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
->>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4

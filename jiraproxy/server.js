@@ -151,7 +151,6 @@ app.get("/api/github/summary", async (req, res) => {
       repo: repoInfo,
       issues: issues.filter((i) => !i.pull_request),
       pulls,
-<<<<<<< HEAD
       commits: commits.slice(0, 5).map((commit) => ({
         sha: commit.sha,
         message: commit.commit?.message || "No message",
@@ -159,18 +158,12 @@ app.get("/api/github/summary", async (req, res) => {
           commit.author?.login || commit.commit?.author?.name || "Unknown",
         date: commit.commit?.author?.date || null,
       })),
-    });    
-    
-=======
-      commits: commits.slice(0, 5),
     });
->>>>>>> 3e0cddf5af44c378e561d6f6c28dd324ebd0d7f4
   } catch (err) {
     console.error("GitHub summary fetch error:", err);
     res.status(500).json({ error: "Failed to fetch GitHub summary" });
   }
 });
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
