@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
+import { FaGithub } from "react-icons/fa";
+import { FiCheckSquare } from "react-icons/fi";
 import {
   collection,
   addDoc,
@@ -687,9 +689,15 @@ const Dashboard = () => {
           transition={{ delay: 0.1 }}
           className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg"
         >
-          <h3 className="text-lg font-semibold mb-2 text-accent-blue">
-            🧾 Jira Tickets
+          <h3 className="text-lg font-semibold mb-2 text-accent-blue flex items-center gap-2">
+            <img
+              src="https://cdn.worldvectorlogo.com/logos/jira-1.svg"
+              alt="Jira Logo"
+              className="w-5 h-5"
+            />
+            Jira Tickets
           </h3>
+
           <p className="text-sm text-text-secondary mb-4">
             {jiraData.length} tickets available
           </p>
@@ -711,8 +719,9 @@ const Dashboard = () => {
           transition={{ delay: 0.2 }}
           className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg"
         >
-          <h3 className="text-lg font-semibold mb-2 text-accent-purple">
-            💻 GitHub Repo
+          <h3 className="text-lg font-semibold mb-2 text-accent-purple flex items-center gap-2">
+            <FaGithub size={20} />
+            GitHub Repo
           </h3>
           <p className="text-sm text-text-secondary mb-4">
             {selectedRepo} — {githubData.commits?.length || 0} recent commits
@@ -735,9 +744,11 @@ const Dashboard = () => {
           transition={{ delay: 0.3 }}
           className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg"
         >
-          <h3 className="text-lg font-semibold mb-2 text-accent-green">
-            📋 Tasks
+          <h3 className="text-lg font-semibold mb-2 text-accent-green flex items-center gap-2">
+            <FiCheckSquare size={20} />
+            Tasks
           </h3>
+
           <p className="text-sm text-text-secondary mb-4">
             <ul className="text-sm text-text-secondary mb-4">
               {tasks.slice(0, 2).map((t) => (
