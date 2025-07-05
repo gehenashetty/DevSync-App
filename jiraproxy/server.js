@@ -123,6 +123,43 @@ app.get("/api/github/issues", async (req, res) => {
   }
 });
 
+app.get("/api/github/summary", async (req, res) => {
+  const repo = req.query.repo;
+  if (!repo) return res.status(400).json({ error: "Missing repo parameter" });
+
+  try {
+    const headers = {
+      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+      Accept: "application/vnd.github+json",
+    };
+
+    const [repoInfoRes, issuesRes, pullsRes, commitsRes] = await Promise.all([
+      fetch(`https://api.github.com/repos/${repo}`, { headers }),
+      fetch(`https://api.github.com/repos/${repo}/issues`, { headers }),
+      fetch(`https://api.github.com/repos/${repo}/pulls`, { headers }),
+      fetch(`https://api.github.com/repos/${repo}/commits`, { headers }),
+    ]);
+
+    const [repoInfo, issues, pulls, commits] = await Promise.all([
+      repoInfoRes.json(),
+      issuesRes.json(),
+      pullsRes.json(),
+      commitsRes.json(),
+    ]);
+
+    res.json({
+      repo: repoInfo,
+      issues: issues.filter((i) => !i.pull_request),
+      pulls,
+      commits: commits.slice(0, 5),
+    });
+  } catch (err) {
+    console.error("GitHub summary fetch error:", err);
+    res.status(500).json({ error: "Failed to fetch GitHub summary" });
+  }
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
   console.log(`Jira proxy server running on port ${PORT}`)
