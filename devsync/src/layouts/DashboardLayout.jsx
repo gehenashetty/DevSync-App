@@ -113,10 +113,10 @@ const DashboardLayout = ({
         )}
       </AnimatePresence>
 
-      {/* Main Content - Fixed to respond to sidebar state */}
+      {/* Main Content - Fixed to respond to sidebar state and hover */}
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ${
-          sidebarOpen ? "ml-16" : "ml-0"
+          sidebarOpen ? (isSidebarHovered ? "ml-64" : "ml-16") : "ml-0"
         }`}
       >
         {/* Header */}
