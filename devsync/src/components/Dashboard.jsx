@@ -1,3 +1,8 @@
+/*
+DEVSYNC - Unified Developer Dashboard with Repo Selector
+Updated with: GitHub Repo Selector Dropdown + localStorage persistence
+*/
+
 import { useState, useEffect } from "react";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
@@ -11,6 +16,9 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [githubIssues, setGithubIssues] = useState([]);
   const [jiraData, setJiraData] = useState([]);
+  const [selectedRepo, setSelectedRepo] = useState(() => {
+    return localStorage.getItem("selectedRepo") || "gehenashetty/DevSync-App";
+  });
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "tasks"), (snapshot) => {
@@ -20,17 +28,17 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetch(
-      "http://localhost:5000/api/github/issues?repo=gehenashetty/DevSync-App"
-    )
+    if (!selectedRepo) return;
+
+    fetch(`http://localhost:5000/api/github/issues?repo=${selectedRepo}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("GitHub Issues Response:", data); // 👈 ADD THIS
+        console.log("Fetched issues for:", selectedRepo, data);
         if (Array.isArray(data)) setGithubIssues(data);
       });
+
     fetchJira();
-  }, []);
-  
+  }, [selectedRepo]);
 
   const fetchJira = async () => {
     const res = await fetch("http://localhost:5000/api/jira");
@@ -79,7 +87,6 @@ export default function Dashboard() {
       {/* 📌 Jira Section */}
       {activeTab === "jira" && (
         <div className="section">
-          {/* 🎯 Create Form First */}
           <h2
             style={{ fontSize: "18px", color: "#1d4ed8", marginBottom: "10px" }}
           >
@@ -87,7 +94,6 @@ export default function Dashboard() {
           </h2>
           <CreateJiraTicketForm onTicketCreated={fetchJira} />
 
-          {/* 🗂 Then Display Tickets */}
           <div style={{ marginTop: "30px" }}>
             <h2
               style={{
@@ -118,6 +124,31 @@ export default function Dashboard() {
       {activeTab === "github" && (
         <div className="section">
           <h2>🐙 GitHub Issues</h2>
+
+          {/* 🔽 Repo Selector */}
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ fontWeight: "bold", marginRight: "10px" }}>
+              🔽 Select GitHub Repo:
+            </label>
+            <input
+              type="text"
+              value={selectedRepo}
+              onChange={(e) => {
+                const val = e.target.value.trim();
+                setSelectedRepo(val);
+                localStorage.setItem("selectedRepo", val);
+              }}
+              placeholder="e.g. vercel/next.js"
+              style={{
+                padding: "6px 10px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+                fontSize: "14px",
+                width: "250px",
+              }}
+            />
+          </div>
+
           <ul>
             {githubIssues.map((item) => (
               <li key={item.id}>
