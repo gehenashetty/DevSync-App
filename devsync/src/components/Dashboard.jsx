@@ -758,7 +758,7 @@ const Dashboard = () => {
       {/* Recent Activity */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-display font-semibold flex items-center">
+          <h2 className="text-xl font-display font-semibold flex items-center text-text-primary">
             <Activity size={18} className="mr-2 text-accent-blue" />
             Recent Activity
           </h2>
@@ -1543,10 +1543,11 @@ const Dashboard = () => {
         </Card>
 
         <Card className="p-6 md:col-span-2">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <h2 className="text-xl font-semibold mb-4 flex items-center text-text-primary">
             <FileCode2 size={20} className="mr-2 text-accent-green" />
             Integration Settings
           </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 border border-white/10 rounded-lg">
               <div className="flex justify-between items-center mb-2">
