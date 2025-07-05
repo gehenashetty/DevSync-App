@@ -51,16 +51,12 @@ Or run them separately:
 
 ```bash
 # Frontend
-npm run dev:frontend
-# or
 cd devsync
 npm run dev
 
 # Backend
-npm run dev:backend
-# or
 cd jiraproxy
-npm run dev
+npm start
 ```
 
 The frontend will be available at http://localhost:5173 and the backend at http://localhost:5000. 
