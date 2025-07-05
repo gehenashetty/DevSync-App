@@ -649,8 +649,8 @@ const Dashboard = () => {
         />
 
         <StatCard
-          title="Active Tasks"
-          value={tasks.filter((t) => t.status === "in_progress").length || "0"}
+          title="Completed Tasks"
+          value={tasks.filter((t) => t.status === "completed").length || "0"}
           icon={<CheckSquare size={18} className="text-accent-green" />}
           trend={{ value: 20, positive: true }}
           variant="green"
