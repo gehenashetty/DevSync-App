@@ -964,6 +964,7 @@ const Dashboard = () => {
                 onClick={() => handleJiraTicketClick(ticket)}
               />
             ))}
+
             {getFilteredJiraTickets().length === 0 && (
               <div className="col-span-3 text-center py-8 text-text-secondary">
                 No Jira tickets found. Create one to get started!

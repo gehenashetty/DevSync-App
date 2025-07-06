@@ -294,15 +294,15 @@ const JiraTicketModal = ({
                 </div>
                 {getStatusBadge(editData.status || ticket.status)}
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Button
                   variant="secondary"
                   size="sm"
                   icon={<ExternalLink size={16} />}
                   onClick={() => {
-                    const jiraUrl ='https://gehenah1101.atlassian.net';
-                    window.open(`${jiraUrl}/browse/${ticket.id}`, '_blank');
+                    const jiraUrl = "https://gehenah1101.atlassian.net";
+                    window.open(`${jiraUrl}/browse/${ticket.id}`, "_blank");
                   }}
                 >
                   Open in Jira
@@ -328,17 +328,31 @@ const JiraTicketModal = ({
                         <input
                           type="text"
                           value={editData.summary}
-                          onChange={(e) => setEditData(prev => ({ ...prev, summary: e.target.value }))}
+                          onChange={(e) =>
+                            setEditData((prev) => ({
+                              ...prev,
+                              summary: e.target.value,
+                            }))
+                          }
                           className="w-full text-2xl font-semibold bg-background border border-white/10 rounded-lg px-3 py-2 text-text-primary"
                           placeholder="Ticket summary"
                         />
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
-                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getPriorityColor(editData.priority)}`}>
+                            <div
+                              className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getPriorityColor(
+                                editData.priority
+                              )}`}
+                            >
                               {getPriorityIcon(editData.priority)}
                               <select
                                 value={editData.priority}
-                                onChange={(e) => setEditData(prev => ({ ...prev, priority: e.target.value }))}
+                                onChange={(e) =>
+                                  setEditData((prev) => ({
+                                    ...prev,
+                                    priority: e.target.value,
+                                  }))
+                                }
                                 className="bg-transparent border-none text-sm font-medium capitalize focus:outline-none"
                               >
                                 <option value="low">Low</option>
@@ -347,7 +361,7 @@ const JiraTicketModal = ({
                               </select>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center space-x-2">
                             <Button
                               variant="primary"
@@ -356,7 +370,7 @@ const JiraTicketModal = ({
                               onClick={handleSave}
                               disabled={isSubmitting}
                             >
-                              {isSubmitting ? 'Saving...' : 'Save'}
+                              {isSubmitting ? "Saving..." : "Save"}
                             </Button>
                             <Button
                               variant="secondary"
@@ -375,15 +389,23 @@ const JiraTicketModal = ({
                         <h1 className="text-2xl font-semibold text-text-primary mb-4">
                           {editData.summary || ticket.summary}
                         </h1>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
-                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getPriorityColor(editData.priority || ticket.priority)}`}>
-                              {getPriorityIcon(editData.priority || ticket.priority)}
-                              <span className="text-sm font-medium capitalize">{editData.priority || ticket.priority}</span>
+                            <div
+                              className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getPriorityColor(
+                                editData.priority || ticket.priority
+                              )}`}
+                            >
+                              {getPriorityIcon(
+                                editData.priority || ticket.priority
+                              )}
+                              <span className="text-sm font-medium capitalize">
+                                {editData.priority || ticket.priority}
+                              </span>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center space-x-2">
                             <Button
                               variant="secondary"
@@ -408,7 +430,9 @@ const JiraTicketModal = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <Card className="p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-text-secondary">Status</span>
+                        <span className="text-sm font-medium text-text-secondary">
+                          Status
+                        </span>
                         <select
                           value={editData.status || ticket.status}
                           onChange={(e) => handleStatusChange(e.target.value)}
@@ -421,12 +445,16 @@ const JiraTicketModal = ({
                           <option value="Done">Done</option>
                         </select>
                       </div>
-                      <div className="text-lg font-semibold">{editData.status || ticket.status}</div>
+                      <div className="text-lg font-semibold">
+                        {editData.status || ticket.status}
+                      </div>
                     </Card>
 
                     <Card className="p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-text-secondary">Priority</span>
+                        <span className="text-sm font-medium text-text-secondary">
+                          Priority
+                        </span>
                         <select
                           value={editData.priority || ticket.priority}
                           onChange={(e) => handlePriorityChange(e.target.value)}
@@ -438,28 +466,37 @@ const JiraTicketModal = ({
                           <option value="high">High</option>
                         </select>
                       </div>
-                      <div className="text-lg font-semibold capitalize">{editData.priority || ticket.priority}</div>
+                      <div className="text-lg font-semibold capitalize">
+                        {editData.priority || ticket.priority}
+                      </div>
                     </Card>
                   </div>
 
                   {/* Description */}
                   <Card className="mb-6">
-                    <div 
+                    <div
                       className="flex items-center justify-between p-4 cursor-pointer"
-                      onClick={() => toggleSection('description')}
+                      onClick={() => toggleSection("description")}
                     >
                       <h3 className="text-lg font-semibold flex items-center">
-                        <MessageSquare size={18} className="mr-2 text-accent-blue" />
+                        <MessageSquare
+                          size={18}
+                          className="mr-2 text-accent-blue"
+                        />
                         Description
                       </h3>
-                      {expandedSections.description ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      {expandedSections.description ? (
+                        <ChevronUp size={18} />
+                      ) : (
+                        <ChevronDown size={18} />
+                      )}
                     </div>
-                    
+
                     <AnimatePresence>
                       {expandedSections.description && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
+                          animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden"
@@ -468,14 +505,21 @@ const JiraTicketModal = ({
                             {isEditing ? (
                               <textarea
                                 value={editData.description}
-                                onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                                onChange={(e) =>
+                                  setEditData((prev) => ({
+                                    ...prev,
+                                    description: e.target.value,
+                                  }))
+                                }
                                 className="w-full bg-background border border-white/10 rounded-lg p-3 text-text-primary placeholder-text-secondary resize-none"
                                 rows={6}
                                 placeholder="Enter ticket description..."
                               />
                             ) : (
                               <div className="text-text-primary whitespace-pre-wrap">
-                                {editData.description || ticket.description || 'No description provided.'}
+                                {editData.description ||
+                                  ticket.description ||
+                                  "No description provided."}
                               </div>
                             )}
                           </div>
@@ -486,22 +530,29 @@ const JiraTicketModal = ({
 
                   {/* Comments */}
                   <Card className="mb-6">
-                    <div 
+                    <div
                       className="flex items-center justify-between p-4 cursor-pointer"
-                      onClick={() => toggleSection('comments')}
+                      onClick={() => toggleSection("comments")}
                     >
                       <h3 className="text-lg font-semibold flex items-center">
-                        <MessageSquare size={18} className="mr-2 text-accent-green" />
+                        <MessageSquare
+                          size={18}
+                          className="mr-2 text-accent-green"
+                        />
                         Comments ({comments.length})
                       </h3>
-                      {expandedSections.comments ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      {expandedSections.comments ? (
+                        <ChevronUp size={18} />
+                      ) : (
+                        <ChevronDown size={18} />
+                      )}
                     </div>
-                    
+
                     <AnimatePresence>
                       {expandedSections.comments && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
+                          animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden"
@@ -509,13 +560,18 @@ const JiraTicketModal = ({
                           <div className="px-4 pb-4 space-y-4">
                             {comments.length > 0 ? (
                               comments.map((comment) => (
-                                <div key={comment.id} className="flex space-x-3">
+                                <div
+                                  key={comment.id}
+                                  className="flex space-x-3"
+                                >
                                   <div className="h-8 w-8 rounded-full bg-accent-blue/20 border border-accent-blue/30 flex items-center justify-center text-sm font-medium text-accent-blue">
                                     {comment.avatar}
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-1">
-                                      <span className="font-medium text-text-primary">{comment.author}</span>
+                                      <span className="font-medium text-text-primary">
+                                        {comment.author}
+                                      </span>
                                       <span className="text-xs text-text-secondary">
                                         {formatRelativeTime(comment.timestamp)}
                                       </span>
@@ -531,7 +587,7 @@ const JiraTicketModal = ({
                                 No comments yet. Be the first to comment!
                               </div>
                             )}
-                            
+
                             <div className="mt-4">
                               <textarea
                                 value={newComment}
@@ -540,7 +596,7 @@ const JiraTicketModal = ({
                                 className="w-full bg-background border border-white/10 rounded-lg p-3 text-text-primary placeholder-text-secondary resize-none"
                                 rows={3}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && e.ctrlKey) {
+                                  if (e.key === "Enter" && e.ctrlKey) {
                                     handleAddComment();
                                   }
                                 }}
@@ -549,13 +605,13 @@ const JiraTicketModal = ({
                                 <span className="text-xs text-text-secondary">
                                   Press Ctrl+Enter to submit
                                 </span>
-                                <Button 
-                                  variant="primary" 
+                                <Button
+                                  variant="primary"
                                   size="sm"
                                   onClick={handleAddComment}
                                   disabled={!newComment.trim() || isSubmitting}
                                 >
-                                  {isSubmitting ? 'Adding...' : 'Add Comment'}
+                                  {isSubmitting ? "Adding..." : "Add Comment"}
                                 </Button>
                               </div>
                             </div>
@@ -572,43 +628,71 @@ const JiraTicketModal = ({
                 <div className="p-6 space-y-6">
                   {/* Assignee */}
                   <div>
-                    <h4 className="text-sm font-medium text-text-secondary mb-3">Assignee</h4>
+                    <h4 className="text-sm font-medium text-text-secondary mb-3">
+                      Assignee
+                    </h4>
                     <div className="flex items-center space-x-3 p-3 bg-background-lighter rounded-lg">
-                      <div className="h-10 w-10 rounded-full bg-accent-blue/20 border border-accent-blue/30 flex items-center justify-center text-sm font-medium text-accent-blue">
-                        {ticket.assignee?.avatar || ticket.assignee?.name?.charAt(0) || '?'}
+                      <div className="h-10 w-10 rounded-full bg-accent-blue/20 border border-accent-blue/30 flex items-center justify-center text-sm font-medium text-accent-blue overflow-hidden">
+                        {ticket.assignee?.avatar ? (
+                          <img
+                            src={ticket.assignee.avatar}
+                            alt="Assignee Avatar"
+                            className="h-full w-full object-cover rounded-full"
+                          />
+                        ) : (
+                          <span>
+                            {ticket.assignee?.name?.charAt(0).toUpperCase() ||
+                              "?"}
+                          </span>
+                        )}
                       </div>
+
                       <div>
-                        <div className="font-medium text-text-primary">{ticket.assignee?.name || 'Unassigned'}</div>
-                        <div className="text-xs text-text-secondary">{ticket.assignee?.email || 'No email'}</div>
+                        <div className="font-medium text-text-primary">
+                          {ticket.assignee?.name || "Unassigned"}
+                        </div>
+                        <div className="text-xs text-text-secondary">
+                          {ticket.assignee?.email || "No email"}
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Due Date */}
                   <div>
-                    <h4 className="text-sm font-medium text-text-secondary mb-3">Due Date</h4>
+                    <h4 className="text-sm font-medium text-text-secondary mb-3">
+                      Due Date
+                    </h4>
                     <div className="flex items-center space-x-2 p-3 bg-background-lighter rounded-lg">
                       <Calendar size={16} className="text-accent-blue" />
                       <span className="text-text-primary">
-                        {ticket.dueDate ? new Date(ticket.dueDate).toLocaleDateString() : 'No due date'}
+                        {ticket.dueDate
+                          ? new Date(ticket.dueDate).toLocaleDateString()
+                          : "No due date"}
                       </span>
                     </div>
                   </div>
 
                   {/* Created/Updated */}
                   <div>
-                    <h4 className="text-sm font-medium text-text-secondary mb-3">Timeline</h4>
+                    <h4 className="text-sm font-medium text-text-secondary mb-3">
+                      Timeline
+                    </h4>
                     <div className="space-y-2">
                       <div className="text-sm">
                         <span className="text-text-secondary">Created:</span>
                         <span className="text-text-primary ml-2">
-                          {ticket.created ? formatRelativeTime(ticket.created) : 'Unknown'}
+                          {ticket.created
+                            ? formatRelativeTime(ticket.created)
+                            : "Unknown"}
                         </span>
                       </div>
                       <div className="text-sm">
                         <span className="text-text-secondary">Updated:</span>
                         <span className="text-text-primary ml-2">
-                          {ticket.updated ? formatRelativeTime(ticket.updated) : 'Unknown'}
+                          {ticket.updated
+                            ? formatRelativeTime(ticket.updated)
+                            : "Unknown"}
                         </span>
                       </div>
                     </div>
@@ -628,9 +712,9 @@ const JiraTicketModal = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg z-60 ${
-              toast.type === 'error' 
-                ? 'bg-red-500 text-white' 
-                : 'bg-green-500 text-white'
+              toast.type === "error"
+                ? "bg-red-500 text-white"
+                : "bg-green-500 text-white"
             }`}
           >
             {toast.message}

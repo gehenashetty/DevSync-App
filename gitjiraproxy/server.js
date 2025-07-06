@@ -44,8 +44,21 @@ app.get("/api/jira", async (req, res) => {
         id: issue.key,
         summary: issue.fields.summary,
         status: issue.fields.status.name,
+        priority: issue.fields.priority?.name || "Medium",
+        assignee: issue.fields.assignee
+          ? {
+              name: issue.fields.assignee.displayName,
+              avatar: issue.fields.assignee.avatarUrls["16x16"],
+              initials: issue.fields.assignee.displayName
+                .split(" ")
+                .map((n) => n[0])
+                .join(""),
+            }
+          : null,
+        dueDate: issue.fields.duedate || null,
       }))
     );
+    
   } catch (err) {
     console.error("Error fetching from Jira:", err);
     res.status(500).json({ error: "Failed to connect to Jira" });
