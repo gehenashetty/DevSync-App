@@ -367,3 +367,38 @@ input:focus, textarea:focus, select:focus {
   text-shadow: 0 0 6px rgba(59, 130, 246, 0.6); /* Blue glow */
 }
 
+.markdown-body {
+  color: #e4e4e7; /* Light gray for dark mode text */
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.markdown-body strong {
+  color: #93c5fd; /* Light blue for emphasis */
+  font-weight: 600;
+}
+
+.markdown-body em {
+  color: #facc15; /* Yellow for italics */
+}
+
+.markdown-body code {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fcd34d;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.markdown-body pre {
+  background-color: #1e293b;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  color: #e2e8f0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.2rem;
+}
