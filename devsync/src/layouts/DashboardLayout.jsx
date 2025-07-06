@@ -39,7 +39,7 @@ const DashboardLayout = ({
     {
       id: "ai",
       label: "DevCoach",
-      icon: <Bot size={20} className="text-accent-purple" />,
+      icon: <Bot size={20}  />,
     },
     { id: "settings", label: "Settings", icon: <Settings size={20} /> },
   ];
