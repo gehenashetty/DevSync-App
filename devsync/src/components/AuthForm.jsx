@@ -147,7 +147,7 @@ const AuthForm = () => {
             <Button
               type="submit"
               variant="primary"
-              className="w-full"
+              className="w-full h-10 flex items-center justify-center space-x-2"
               icon={isLogin ? <LogIn size={16} /> : <UserPlus size={16} />}
               isLoading={loading}
             >
@@ -171,7 +171,7 @@ const AuthForm = () => {
               <Button
                 type="button"
                 variant="secondary"
-                className="w-full"
+                className="w-full h-10 flex items-center justify-center space-x-2"
                 icon={<Chrome size={16} />}
                 onClick={handleGoogleSignIn}
                 disabled={loading}
