@@ -695,7 +695,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg"
+          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg shine-effect"
         >
           <h3 className="text-lg font-semibold mb-2 text-accent-blue flex items-center gap-2">
             <img
@@ -713,6 +713,7 @@ const Dashboard = () => {
             variant="secondary"
             size="sm"
             onClick={() => setActiveTab("jira")}
+            className="border border-accent-blue text-accent-blue border-accent-blue-light hover:text-accent-blue-light"
           >
             View Jira
           </Button>
@@ -725,7 +726,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg"
+          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg shine-effect"
         >
           <h3 className="text-lg font-semibold mb-2 text-accent-purple flex items-center gap-2">
             <FaGithub size={20} />
@@ -738,6 +739,7 @@ const Dashboard = () => {
             variant="secondary"
             size="sm"
             onClick={() => setActiveTab("github")}
+            className="border border-accent-blue text-accent-blue border-accent-blue-light hover:text-accent-blue-light"
           >
             View GitHub
           </Button>
@@ -750,7 +752,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg"
+          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg shine-effect"
         >
           <h3 className="text-lg font-semibold mb-2 text-accent-green flex items-center gap-2">
             <FiCheckSquare size={20} />
@@ -759,7 +761,7 @@ const Dashboard = () => {
 
           <p className="text-sm text-text-secondary mb-4">
             <ul className="text-sm text-text-secondary mb-4">
-              {tasks.slice(0, 2).map((t) => (
+              {tasks.slice(0, 1).map((t) => (
                 <li key={t.id}>• {t.title}</li>
               ))}
             </ul>
@@ -768,8 +770,9 @@ const Dashboard = () => {
             variant="secondary"
             size="sm"
             onClick={() => setActiveTab("tasks")}
+            className="border border-accent-blue text-accent-blue border-accent-blue-light hover:text-accent-blue-light"
           >
-            View Tasks
+            View All Tasks
           </Button>
         </motion.div>
       </div>
@@ -1168,7 +1171,7 @@ const Dashboard = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full items-stretch">
               {repoInfo ? (
                 <RepoCard
                   name={repoInfo.name}
@@ -1194,7 +1197,7 @@ const Dashboard = () => {
 
             {repoInfo && (
               <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4">
+                <h2 className="text-xl font-semibold mb-4 flex items-center text-text-primary">
                   Repository Activity
                 </h2>
 
