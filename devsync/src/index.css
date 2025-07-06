@@ -320,3 +320,41 @@ input:focus, textarea:focus, select:focus {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+/* === Shine Hover Effect for Cards === */
+.shine-effect {
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+  transition: transform 0.3s ease;
+}
+
+.shine-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  z-index: 1;
+}
+
+.shine-effect:hover::before {
+  animation: shine 0.8s ease-in-out forwards;
+}
+
+.shine-effect:hover {
+  transform: scale(1.02);
+}
+
+@keyframes shine {
+  100% {
+    left: 125%;
+  }
+}

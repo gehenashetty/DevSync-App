@@ -641,41 +641,49 @@ const Dashboard = () => {
     <>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          title="Open Tickets"
-          value={jiraData.length || "0"}
-          icon={<FileCode2 size={18} className="text-accent-blue" />}
-          trend={{ value: 8, positive: false }}
-          variant="blue"
-          delay={0.1}
-        />
+        <div className="shine-effect">
+          <StatCard
+            title="Open Tickets"
+            value={jiraData.length || "0"}
+            icon={<FileCode2 size={18} className="text-accent-blue" />}
+            trend={{ value: 8, positive: false }}
+            variant="blue"
+            delay={0.1}
+          />
+        </div>
 
-        <StatCard
-          title="Completed Tasks"
-          value={tasks.filter((t) => t.status === "completed").length || "0"}
-          icon={<CheckSquare size={18} className="text-accent-green" />}
-          trend={{ value: 20, positive: true }}
-          variant="green"
-          delay={0.2}
-        />
+        <div className="shine-effect">
+          <StatCard
+            title="Completed Tasks"
+            value={tasks.filter((t) => t.status === "completed").length || "0"}
+            icon={<CheckSquare size={18} className="text-accent-green" />}
+            trend={{ value: 20, positive: true }}
+            variant="green"
+            delay={0.2}
+          />
+        </div>
 
-        <StatCard
-          title="Pull Requests"
-          value={githubData.prs?.length || "0"}
-          icon={<GitPullRequest size={18} className="text-accent-purple" />}
-          trend={{ value: 12, positive: true }}
-          variant="purple"
-          delay={0.3}
-        />
+        <div className="shine-effect">
+          <StatCard
+            title="Pull Requests"
+            value={githubData.prs?.length || "0"}
+            icon={<GitPullRequest size={18} className="text-accent-purple" />}
+            trend={{ value: 12, positive: true }}
+            variant="purple"
+            delay={0.3}
+          />
+        </div>
 
-        <StatCard
-          title="Open Issues"
-          value={githubData.issues?.length || "0"}
-          icon={<Activity size={18} className="text-accent-blue" />}
-          trend={{ value: 3, positive: true }}
-          variant="blue"
-          delay={0.4}
-        />
+        <div className="shine-effect">
+          <StatCard
+            title="Open Issues"
+            value={githubData.issues?.length || "0"}
+            icon={<Activity size={18} className="text-accent-blue" />}
+            trend={{ value: 3, positive: true }}
+            variant="blue"
+            delay={0.4}
+          />
+        </div>
       </div>
 
       {/* Main Content */}
