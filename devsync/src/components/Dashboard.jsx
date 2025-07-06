@@ -31,6 +31,8 @@ import CreateActionButton from "./ui/CreateActionButton";
 import { useToast } from "./ui/ToastProvider";
 import TaskForm from "./tasks/TaskForm";
 import AddRepoForm from "./github/AddRepoForm";
+import DevCoach from "../pages/DevCoach";
+
 
 import {
   LayoutDashboard,
@@ -641,7 +643,20 @@ const Dashboard = () => {
     <>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="shine-effect">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            boxShadow:
+              "0 0 16px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3)", // Always active
+          }}
+          whileHover={{
+            scale: 1.03,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="shine-effect pulse-blue rounded-xl"
+        >
           <StatCard
             title="Open Tickets"
             value={jiraData.length || "0"}
@@ -650,9 +665,22 @@ const Dashboard = () => {
             variant="blue"
             delay={0.1}
           />
-        </div>
+        </motion.div>
 
-        <div className="shine-effect">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            boxShadow:
+              "0 0 16px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3)", // Always active
+          }}
+          whileHover={{
+            scale: 1.03,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="shine-effect pulse-blue rounded-xl"
+        >
           <StatCard
             title="Completed Tasks"
             value={tasks.filter((t) => t.status === "completed").length || "0"}
@@ -661,9 +689,22 @@ const Dashboard = () => {
             variant="green"
             delay={0.2}
           />
-        </div>
+        </motion.div>
 
-        <div className="shine-effect">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            boxShadow:
+              "0 0 16px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3)", // Always active
+          }}
+          whileHover={{
+            scale: 1.03,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="shine-effect pulse-blue rounded-xl"
+        >
           <StatCard
             title="Pull Requests"
             value={githubData.prs?.length || "0"}
@@ -672,9 +713,22 @@ const Dashboard = () => {
             variant="purple"
             delay={0.3}
           />
-        </div>
+        </motion.div>
 
-        <div className="shine-effect">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            boxShadow:
+              "0 0 16px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3)", // Always active
+          }}
+          whileHover={{
+            scale: 1.03,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="shine-effect pulse-blue rounded-xl"
+        >
           <StatCard
             title="Open Issues"
             value={githubData.issues?.length || "0"}
@@ -683,19 +737,32 @@ const Dashboard = () => {
             variant="blue"
             delay={0.4}
           />
-        </div>
+        </motion.div>
       </div>
 
       {/* Main Content */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Jira Card */}
         <motion.div
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg shine-effect"
+          whileHover={{
+            scale: 1.06,
+            rotate: 0.5,
+          }}
+          whileTap={{ scale: 0.96 }}
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            boxShadow:
+              "0 0 16px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3)",
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 25,
+          }}
+          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow-xl shine-blue pulse-blue"
         >
           <h3 className="text-lg font-semibold mb-2 text-accent-blue flex items-center gap-2">
             <img
@@ -721,12 +788,25 @@ const Dashboard = () => {
 
         {/* GitHub Card */}
         <motion.div
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg shine-effect"
+          whileHover={{
+            scale: 1.06,
+            rotate: 0.5,
+          }}
+          whileTap={{ scale: 0.96 }}
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            boxShadow:
+              "0 0 16px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3)",
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 25,
+          }}
+          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow-xl shine-blue pulse-blue"
         >
           <h3 className="text-lg font-semibold mb-2 text-accent-purple flex items-center gap-2">
             <FaGithub size={20} />
@@ -747,12 +827,25 @@ const Dashboard = () => {
 
         {/* Tasks Card */}
         <motion.div
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow hover:shadow-lg shine-effect"
+          whileHover={{
+            scale: 1.06,
+            rotate: 0.5,
+          }}
+          whileTap={{ scale: 0.96 }}
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            boxShadow:
+              "0 0 16px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3)",
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 25,
+          }}
+          className="bg-background-lighter border border-white/10 rounded-xl p-6 shadow-xl shine-blue pulse-blue"
         >
           <h3 className="text-lg font-semibold mb-2 text-accent-green flex items-center gap-2">
             <FiCheckSquare size={20} />
@@ -1674,10 +1767,13 @@ const Dashboard = () => {
         case "settings":
           console.log("Rendering Settings content");
           return renderSettingsContent();
+        case "ai":
+          console.log("Rendering DevCoach (AI Assistant)");
+          return <DevCoach />; // ✅ Add this line
         default:
           console.log("Rendering Dashboard content");
           return renderDashboardContent();
-      }
+      }    
     } catch (error) {
       console.error("Error rendering content:", error);
       return (

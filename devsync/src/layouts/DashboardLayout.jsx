@@ -12,6 +12,7 @@ import {
   Search,
   Bell,
   User,
+  Bot
 } from "lucide-react";
 import { useSound } from "../components/ThemeProvider";
 import { signOut } from "firebase/auth";
@@ -35,6 +36,11 @@ const DashboardLayout = ({
     { id: "jira", label: "Jira", icon: <SiJira size={20} /> },
     { id: "github", label: "GitHub", icon: <FaGithub size={20} /> },
     { id: "tasks", label: "Tasks", icon: <CheckSquare size={20} /> },
+    {
+      id: "ai",
+      label: "DevCoach",
+      icon: <Bot size={20} className="text-accent-purple" />,
+    },
     { id: "settings", label: "Settings", icon: <Settings size={20} /> },
   ];
 

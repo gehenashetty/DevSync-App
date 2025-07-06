@@ -358,3 +358,12 @@ input:focus, textarea:focus, select:focus {
     left: 125%;
   }
 }
+
+/* Neon text effect */
+.gradient-text-blue {
+  background: linear-gradient(to right, #3b82f6, #60a5fa); /* Blue-500 to Blue-400 */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 6px rgba(59, 130, 246, 0.6); /* Blue glow */
+}
+

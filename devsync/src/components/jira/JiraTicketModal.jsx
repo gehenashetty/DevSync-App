@@ -295,21 +295,24 @@ const JiraTicketModal = ({
                 {getStatusBadge(editData.status || ticket.status)}
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="secondary"
                   size="sm"
-                  icon={<ExternalLink size={16} />}
                   onClick={() => {
                     const jiraUrl = "https://gehenah1101.atlassian.net";
                     window.open(`${jiraUrl}/browse/${ticket.id}`, "_blank");
                   }}
                 >
-                  Open in Jira
+                  <div className="flex items-center gap-1">
+                    <ExternalLink size={16} className="mt-[1px]" />
+                    <span>Open in Jira</span>
+                  </div>
                 </Button>
+
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center"
                 >
                   <X size={20} className="text-text-secondary" />
                 </button>
@@ -406,20 +409,26 @@ const JiraTicketModal = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="secondary"
                               size="sm"
-                              icon={<Edit3 size={16} />}
                               onClick={handleEdit}
                             >
-                              Edit
+                              <div className="flex items-center gap-1">
+                                <Edit3 size={16} className="mt-[1px]" />
+                                <span>Edit</span>
+                              </div>
                             </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              icon={<MoreHorizontal size={16} />}
-                            />
+
+                            <Button variant="secondary" size="sm">
+                              <div className="flex items-center justify-center">
+                                <MoreHorizontal
+                                  size={16}
+                                  className="mt-[1px]"
+                                />
+                              </div>
+                            </Button>
                           </div>
                         </div>
                       </>
