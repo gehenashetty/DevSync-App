@@ -7,7 +7,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "../firebase";
-import { signOut } from "firebase/auth";
+import { signOut, updateProfile } from "firebase/auth";
 import { FaGithub } from "react-icons/fa";
 import { FiCheckSquare } from "react-icons/fi";
 import {
@@ -32,7 +32,12 @@ import { useToast } from "./ui/ToastProvider";
 import TaskForm from "./tasks/TaskForm";
 import AddRepoForm from "./github/AddRepoForm";
 import DevCoach from "../pages/DevCoach";
-
+import GitHubService from "../services/GitHubService";
+import JiraService from "../services/JiraService";
+import CredentialService from "../services/CredentialService";
+import GitHubCredentialsForm from "./settings/GitHubCredentialsForm";
+import JiraCredentialsForm from "./settings/JiraCredentialsForm";
+import Documentation from './knowledge/Documentation';
 
 import {
   LayoutDashboard,
@@ -55,6 +60,9 @@ import {
   Search,
 } from "lucide-react";
 import { useTheme, useSound } from "./ThemeProvider";
+import { Doughnut, Pie } from 'react-chartjs-2';
+import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
+Chart.register(ArcElement, Tooltip, Legend);
 
 // Mock data - in a real app, this would come from API calls
 const mockJiraTickets = [
@@ -188,11 +196,12 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [refreshing, setRefreshing] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedJiraTicket, setSelectedJiraTicket] = useState(null);
   const [showJiraModal, setShowJiraModal] = useState(false);
   const [jiraSearchTerm, setJiraSearchTerm] = useState("");
   const [jiraFilter, setJiraFilter] = useState("all");
+  const [taskSearchTerm, setTaskSearchTerm] = useState("");
+  const [taskFilter, setTaskFilter] = useState("all");
   const [task, setTask] = useState("");
   const [tasks, setTasks] = useState([]);
   const [githubRepoInfo, setGithubRepoInfo] = useState(null);
@@ -238,6 +247,16 @@ const Dashboard = () => {
   const [showCreateJiraForm, setShowCreateJiraForm] = useState(false);
   const [showAddRepoForm, setShowAddRepoForm] = useState(false);
 
+  // Add state for connection status
+  const [githubConnected, setGithubConnected] = useState(false);
+  const [jiraConnected, setJiraConnected] = useState(false);
+  
+  // Add state for credential forms
+  const [showGitHubForm, setShowGitHubForm] = useState(false);
+  const [showJiraForm, setShowJiraForm] = useState(false);
+
+  const [displayName, setDisplayName] = useState(user?.displayName || "User");
+
   // Get toast notification functionality
   const { showToast } = useToast();
 
@@ -274,6 +293,71 @@ const Dashboard = () => {
     };
   };
 
+  // Handle GitHub disconnection
+  const handleGitHubDisconnect = () => {
+    try {
+      // Reset GitHub service
+      GitHubService.reset();
+      // Remove stored credentials
+      CredentialService.removeCredentials('github');
+      // Update connection status
+      setGithubConnected(false);
+      // Clear GitHub data
+      setGithubData({
+        repoInfo: null,
+        issues: [],
+        prs: [],
+        commits: [],
+      });
+      // Hide create repo form if open
+      setShowCreateForm(false);
+      // Show success message
+      showToast('GitHub disconnected successfully', 'success');
+    } catch (error) {
+      console.error('Error disconnecting GitHub:', error);
+      showToast('Failed to disconnect GitHub', 'error');
+    }
+  };
+
+  // Handle Jira disconnection
+  const handleJiraDisconnect = () => {
+    try {
+      // Reset Jira service
+      JiraService.reset();
+      // Remove stored credentials
+      CredentialService.removeCredentials('jira');
+      // Update connection status
+      setJiraConnected(false);
+      // Clear Jira data
+      setJiraData([]);
+      // Hide create form if open
+      setShowCreateForm(false);
+      // Show success message
+      showToast('Jira disconnected successfully', 'success');
+    } catch (error) {
+      console.error('Error disconnecting Jira:', error);
+      showToast('Failed to disconnect Jira', 'error');
+    }
+  };
+
+  // Handle successful GitHub connection
+  const handleGitHubConnectSuccess = (user) => {
+    setGithubConnected(true);
+    setShowGitHubForm(false);
+    showToast('GitHub connected successfully', 'success');
+    // Refresh GitHub data
+    fetchGithubData();
+  };
+
+  // Handle successful Jira connection
+  const handleJiraConnectSuccess = (user) => {
+    setJiraConnected(true);
+    setShowJiraForm(false);
+    showToast('Jira connected successfully', 'success');
+    // Refresh Jira data
+    fetchJira();
+  };
+
   useEffect(() => {
     console.log("Setting up tasks listener");
     const unsubscribe = onSnapshot(
@@ -302,6 +386,37 @@ const Dashboard = () => {
     );
 
     return () => unsubscribe();
+  }, []);
+
+  // Check connection status on component mount
+  useEffect(() => {
+    // Check if credentials exist and initialize services
+    const githubCredentials = CredentialService.getCredentials('github');
+    const jiraCredentials = CredentialService.getCredentials('jira');
+    
+    if (githubCredentials) {
+      try {
+        GitHubService.initialize(githubCredentials);
+        setGithubConnected(true);
+      } catch (error) {
+        console.error('Failed to initialize GitHub service:', error);
+        setGithubConnected(false);
+      }
+    } else {
+      setGithubConnected(false);
+    }
+    
+    if (jiraCredentials) {
+      try {
+        JiraService.initialize(jiraCredentials);
+        setJiraConnected(true);
+      } catch (error) {
+        console.error('Failed to initialize Jira service:', error);
+        setJiraConnected(false);
+      }
+    } else {
+      setJiraConnected(false);
+    }
   }, []);
 
   // Load initial data when component mounts
@@ -336,7 +451,7 @@ const Dashboard = () => {
     try {
       // Try to fetch from the backend server first
       const response = await fetch(
-        `http://localhost:5000/api/github/summary?repo=${selectedRepo}`
+        `http://localhost:3001/api/github/summary?repo=${selectedRepo}`
       );
       console.log("GitHub API response:", response.status);
 
@@ -419,7 +534,7 @@ const Dashboard = () => {
     try {
       console.log("Fetching Jira data");
       setJiraLoading(true);
-      const res = await fetch("http://localhost:5000/api/jira");
+      const res = await fetch("http://localhost:3001/api/jira");
       if (res.ok) {
         const data = await res.json();
         console.log("Jira data received:", data);
@@ -485,7 +600,7 @@ const Dashboard = () => {
         createdAt: new Date().toISOString(),
       });
       console.log("Task added successfully");
-      setShowCreateForm(false);
+      setShowCreateTaskForm(false);
     } catch (error) {
       console.error("Error adding task:", error);
       alert("Failed to add task: " + error.message);
@@ -504,7 +619,7 @@ const Dashboard = () => {
       // Try to add via backend if available
       try {
         const response = await fetch(
-          "http://localhost:5000/api/github/add-repo",
+          "http://localhost:3001/api/github/add-repo",
           {
             method: "POST",
             headers: {
@@ -630,6 +745,40 @@ const Dashboard = () => {
         filtered = filtered.filter(
           (ticket) => ticket.status?.toLowerCase() === "in progress"
         );
+        break;
+      default:
+        // 'all' - no additional filtering
+        break;
+    }
+
+    return filtered;
+  };
+
+  // Filter and search tasks
+  const getFilteredTasks = () => {
+    let filtered = tasks;
+
+    // Apply search filter
+    if (taskSearchTerm) {
+      const searchLower = taskSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (task) =>
+          task.title?.toLowerCase().includes(searchLower) ||
+          task.description?.toLowerCase().includes(searchLower) ||
+          task.tags?.some(tag => tag.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Apply status filter
+    switch (taskFilter) {
+      case "in-progress":
+        filtered = filtered.filter((task) => task.status === "in-progress");
+        break;
+      case "completed":
+        filtered = filtered.filter((task) => task.status === "completed");
+        break;
+      case "pending":
+        filtered = filtered.filter((task) => task.status === "pending");
         break;
       default:
         // 'all' - no additional filtering
@@ -956,123 +1105,252 @@ const Dashboard = () => {
           Manage and track your Jira tickets
         </motion.p>
       </div>
-
-      {/* Search and Filter Section */}
-      <div className="mb-6 space-y-4">
-        {/* Search Bar */}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              placeholder="Search tickets by title, description, ID, or assignee..."
-              value={jiraSearchTerm}
-              onChange={(e) => setJiraSearchTerm(e.target.value)}
-              className="w-full bg-background border border-white/10 rounded-lg py-2 px-4 pl-10 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue"
-            />
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary"
-            />
-          </div>
-          {jiraSearchTerm && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setJiraSearchTerm("")}
-            >
-              Clear
-            </Button>
-          )}
-        </div>
-
-        {/* Filter Buttons */}
-        <div className="flex justify-between items-center">
-          <div className="flex space-x-2">
-            <Button
-              variant={jiraFilter === "all" ? "primary" : "secondary"}
-              onClick={() => setJiraFilter("all")}
-            >
-              All Tickets
-            </Button>
-            <Button
-              variant={jiraFilter === "assigned" ? "primary" : "secondary"}
-              onClick={() => setJiraFilter("assigned")}
-            >
-              Assigned to Me
-            </Button>
-            <Button
-              variant={jiraFilter === "recent" ? "primary" : "secondary"}
-              onClick={() => setJiraFilter("recent")}
-            >
-              Recent
-            </Button>
-            <Button
-              variant={jiraFilter === "high-priority" ? "primary" : "secondary"}
-              onClick={() => setJiraFilter("high-priority")}
-            >
-              High Priority
-            </Button>
-            <Button
-              variant={jiraFilter === "in-progress" ? "primary" : "secondary"}
-              onClick={() => setJiraFilter("in-progress")}
-            >
-              In Progress
-            </Button>
-          </div>
-          {/* <Button 
-            variant="primary" 
-            icon={<Plus size={16} />}
-            onClick={() => setShowCreateForm(true)}
+      {jiraConnected && (
+        <div className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="bg-gradient-to-br from-background-lighter via-background to-background-darker border border-white/10 rounded-2xl shadow-2xl p-8 flex flex-col md:flex-row gap-10 items-center hover:shadow-accent-blue/30 transition-all duration-300"
           >
-            Create Ticket
-          </Button> */}
+            {/* Status Donut Chart */}
+            <div className="flex-1 min-w-[220px] flex flex-col items-center justify-center max-w-[180px] mx-auto">
+              <h3 className="font-semibold mb-2 text-text-primary">Status Breakdown</h3>
+              <Doughnut
+                data={{
+                  labels: ['To Do', 'In Progress', 'In Review', 'Done'],
+                  datasets: [{
+                    data: [
+                      jiraData.filter(t => t.status === 'To Do').length,
+                      jiraData.filter(t => t.status === 'In Progress').length,
+                      jiraData.filter(t => t.status === 'In Review').length,
+                      jiraData.filter(t => t.status === 'Done').length,
+                    ],
+                    backgroundColor: [
+                      '#7dd3fc', // To Do
+                      '#fbbf24', // In Progress
+                      '#a78bfa', // In Review
+                      '#4ade80', // Done
+                    ],
+                    borderWidth: 2,
+                  }],
+                }}
+                options={{
+                  cutout: '75%',
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true },
+                  },
+                  maintainAspectRatio: false,
+                }}
+                className="w-32 h-32 max-w-[140px] max-h-[140px] transition-all duration-300 hover:scale-105"
+                style={{ maxWidth: '140px', maxHeight: '140px' }}
+              />
+              <div className="flex flex-wrap justify-center gap-2 mt-2 text-xs text-text-secondary">
+                <span>To Do: {jiraData.filter(t => t.status === 'To Do').length}</span>
+                <span>In Progress: {jiraData.filter(t => t.status === 'In Progress').length}</span>
+                <span>In Review: {jiraData.filter(t => t.status === 'In Review').length}</span>
+                <span>Done: {jiraData.filter(t => t.status === 'Done').length}</span>
+              </div>
+            </div>
+            {/* Priority Pie Chart */}
+            <div className="flex-1 min-w-[220px] flex flex-col items-center justify-center max-w-[180px] mx-auto">
+              <h3 className="font-semibold mb-2 text-text-primary">Priority Breakdown</h3>
+              <Pie
+                data={{
+                  labels: ['High', 'Medium', 'Low'],
+                  datasets: [{
+                    data: [
+                      jiraData.filter(t => t.priority?.toLowerCase() === 'high').length,
+                      jiraData.filter(t => t.priority?.toLowerCase() === 'medium').length,
+                      jiraData.filter(t => t.priority?.toLowerCase() === 'low').length,
+                    ],
+                    backgroundColor: [
+                      '#f87171', // High
+                      '#fbbf24', // Medium
+                      '#60a5fa', // Low
+                    ],
+                    borderWidth: 2,
+                  }],
+                }}
+                options={{
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true },
+                  },
+                  maintainAspectRatio: false,
+                }}
+                className="w-32 h-32 max-w-[140px] max-h-[140px] transition-all duration-300 hover:scale-105"
+                style={{ maxWidth: '140px', maxHeight: '140px' }}
+              />
+              <div className="flex flex-wrap justify-center gap-2 mt-2 text-xs text-text-secondary">
+                <span>High: {jiraData.filter(t => t.priority?.toLowerCase() === 'high').length}</span>
+                <span>Medium: {jiraData.filter(t => t.priority?.toLowerCase() === 'medium').length}</span>
+                <span>Low: {jiraData.filter(t => t.priority?.toLowerCase() === 'low').length}</span>
+              </div>
+            </div>
+            {/* Recent Activity */}
+            <div className="flex-1 min-w-[220px]">
+              <h3 className="font-semibold mb-2 text-text-primary">Recent Activity</h3>
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                {jiraData
+                  .slice()
+                  .sort((a, b) => new Date(b.updated) - new Date(a.updated))
+                  .slice(0, 5)
+                  .map((t, i) => (
+                    <motion.div
+                      key={t.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * i, duration: 0.4 }}
+                      className="bg-background p-4 rounded-xl border border-white/10 shadow-md flex flex-col gap-1 hover:bg-background-lighter transition-all duration-200"
+                    >
+                      <span className="font-medium text-accent-blue">{t.summary}</span>
+                      <span className="text-xs text-text-secondary">{t.status} • {t.priority} • Updated {new Date(t.updated).toLocaleString()}</span>
+                    </motion.div>
+                  ))}
+                {jiraData.length === 0 && <div className="text-text-secondary text-sm">No recent activity</div>}
+              </div>
+            </div>
+          </motion.div>
         </div>
+      )}
 
-        {/* Results Summary */}
-        {jiraSearchTerm || jiraFilter !== "all" ? (
-          <div className="text-sm text-text-secondary">
-            Showing {getFilteredJiraTickets().length} of {jiraData.length}{" "}
-            tickets
-            {jiraSearchTerm && ` matching "${jiraSearchTerm}"`}
-            {jiraFilter !== "all" && ` (${jiraFilter.replace("-", " ")})`}
+      {!jiraConnected ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg text-sm">
+            <strong>Not connected to Jira.</strong> Please connect your Jira account in Settings to view and manage tickets.
           </div>
-        ) : null}
-      </div>
-
-      {jiraLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue"></div>
         </div>
       ) : (
         <>
-          {jiraData === mockJiraTickets && (
-            <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 rounded-lg text-sm">
-              <strong>Note:</strong> Using mock Jira data. To connect to real
-              Jira, start the backend server.
-            </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {getFilteredJiraTickets().map((ticket, index) => (
-              <JiraTicketCard
-                key={`${ticket.id}-${index}`}
-                {...ticket}
-                delay={0.1 + index * 0.05}
-                onClick={() => handleJiraTicketClick(ticket)}
-              />
-            ))}
-
-            {getFilteredJiraTickets().length === 0 && (
-              <div className="col-span-3 text-center py-8 text-text-secondary">
-                No Jira tickets found. Create one to get started!
+          {/* Search and Filter Section */}
+          <div className="mb-6 space-y-4">
+            {/* Search Bar */}
+            <div className="flex items-center space-x-4">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Search tickets by title, description, ID, or assignee..."
+                  value={jiraSearchTerm}
+                  onChange={(e) => setJiraSearchTerm(e.target.value)}
+                  className="w-full bg-background border border-white/10 rounded-lg py-2 px-4 pl-10 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue"
+                />
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary"
+                />
               </div>
-            )}
+              {jiraSearchTerm && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setJiraSearchTerm("")}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+
+            {/* Filter Buttons */}
+            <div className="flex justify-between items-center">
+              <div className="flex space-x-2">
+                <Button
+                  variant={jiraFilter === "all" ? "primary" : "secondary"}
+                  onClick={() => setJiraFilter("all")}
+                >
+                  All Tickets
+                </Button>
+                <Button
+                  variant={jiraFilter === "assigned" ? "primary" : "secondary"}
+                  onClick={() => setJiraFilter("assigned")}
+                >
+                  Assigned to Me
+                </Button>
+                <Button
+                  variant={jiraFilter === "recent" ? "primary" : "secondary"}
+                  onClick={() => setJiraFilter("recent")}
+                >
+                  Recent
+                </Button>
+                <Button
+                  variant={jiraFilter === "high-priority" ? "primary" : "secondary"}
+                  onClick={() => setJiraFilter("high-priority")}
+                >
+                  High Priority
+                </Button>
+                <Button
+                  variant={jiraFilter === "in-progress" ? "primary" : "secondary"}
+                  onClick={() => setJiraFilter("in-progress")}
+                >
+                  In Progress
+                </Button>
+              </div>
+              <Button 
+                variant="primary" 
+                icon={<Plus size={16} />}
+                onClick={() => setShowCreateJiraForm(true)}
+              >
+                Create Ticket
+              </Button>
+            </div>
+
+            {/* Results Summary */}
+            {jiraSearchTerm || jiraFilter !== "all" ? (
+              <div className="text-sm text-text-secondary">
+                Showing {getFilteredJiraTickets().length} of {jiraData.length}{" "}
+                tickets
+                {jiraSearchTerm && ` matching "${jiraSearchTerm}"`}
+                {jiraFilter !== "all" && ` (${jiraFilter.replace("-", " ")})`}
+              </div>
+            ) : null}
           </div>
+
+          {jiraLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue"></div>
+            </div>
+          ) : (
+            <>
+              {jiraData === mockJiraTickets && (
+                <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 rounded-lg text-sm">
+                  <strong>Note:</strong> Using mock Jira data. To connect to real
+                  Jira, start the backend server.
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getFilteredJiraTickets().map((ticket, index) => (
+                  <JiraTicketCard
+                    key={`${ticket.id}-${index}`}
+                    {...ticket}
+                    delay={0.1 + index * 0.05}
+                    onClick={() => handleJiraTicketClick(ticket)}
+                  />
+                ))}
+
+                {getFilteredJiraTickets().length === 0 && (
+                  <div className="col-span-3 text-center py-8 text-text-secondary">
+                    No Jira tickets found. Create one to get started!
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </>
       )}
     </>
   );
 
   const renderGithubContent = () => {
+    if (!githubConnected) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg text-sm">
+            <strong>Not connected to GitHub.</strong> Please connect your GitHub account in Settings to view and manage repositories.
+          </div>
+        </div>
+      );
+    }
     try {
       console.log("Rendering GitHub content", {
         loading,
@@ -1116,25 +1394,6 @@ const Dashboard = () => {
               </motion.p>
             </div>
 
-            <div className="flex justify-between mb-6">
-              <div className="flex space-x-2">
-                <Button
-                  variant="secondary"
-                  onClick={handleRefresh}
-                  disabled={loading}
-                >
-                  {loading ? "Loading..." : "Refresh"}
-                </Button>
-              </div>
-              <Button
-                variant="primary"
-                icon={<Plus size={16} />}
-                onClick={() => setShowCreateForm(true)}
-              >
-                Add Repository
-              </Button>
-            </div>
-
             <div className="text-center py-12">
               <div className="bg-background-lighter p-8 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2">
@@ -1146,7 +1405,7 @@ const Dashboard = () => {
                 </p>
                 <Button
                   variant="primary"
-                  onClick={() => setShowCreateForm(true)}
+                  onClick={() => setShowAddRepoForm(true)}
                 >
                   Add Your First Repository
                 </Button>
@@ -1239,24 +1498,17 @@ const Dashboard = () => {
             </motion.p>
           </div>
 
-          <div className="flex justify-between mb-6">
-            <div className="flex space-x-2">
-              <Button
-                variant="secondary"
-                onClick={handleRefresh}
-                disabled={loading}
-              >
-                {loading ? "Loading..." : "Refresh"}
-              </Button>
+          {githubConnected && (
+            <div className="mb-6 flex flex-col gap-2">
+              <input
+                type="text"
+                className="p-2 rounded border border-white/10 bg-background w-full max-w-md"
+                placeholder="Search repositories by name..."
+                value={repoSearch}
+                onChange={e => setRepoSearch(e.target.value)}
+              />
             </div>
-            {/* <Button 
-              variant="primary" 
-              icon={<Plus size={16} />}
-              onClick={() => setShowCreateForm(true)}
-            >
-              Add Repository
-            </Button> */}
-          </div>
+          )}
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -1265,169 +1517,32 @@ const Dashboard = () => {
             transition={{ duration: 0.3 }}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full items-stretch">
-              {repoInfo ? (
-                <RepoCard
-                  name={repoInfo.name}
-                  description={repoInfo.description}
-                  stars={repoInfo.stars}
-                  forks={repoInfo.forks}
-                  watchers={repoInfo.watchers}
-                  language={repoInfo.language}
-                  lastCommit={repoInfo.lastCommit}
-                  openIssues={repoInfo.openIssues}
-                  pullRequests={repoInfo.pullRequests}
-                  delay={0.1}
-                  onClick={() =>
-                    window.open(`https://github.com/${selectedRepo}`, "_blank")
-                  }
-                />
-              ) : (
-                <div className="col-span-2 text-center py-8 text-text-secondary">
+              {githubRepos
+                .filter(repo =>
+                  repo.name.toLowerCase().includes(repoSearch.toLowerCase()) ||
+                  repo.full_name.toLowerCase().includes(repoSearch.toLowerCase())
+                )
+                .map(repo => (
+                  <Card key={repo.id} className="p-5 flex flex-col gap-2 hover:bg-background-lighter transition-all duration-200 cursor-pointer group" onClick={() => handleRepoTileClick(repo)}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <img src={repo.owner.avatar_url} alt={repo.owner.login} className="w-7 h-7 rounded-full" />
+                      <span className="font-semibold text-accent-blue truncate max-w-[140px] group-hover:underline" title={repo.full_name}>{repo.full_name}</span>
+                    </div>
+                    <div className="text-sm text-text-secondary mb-1 truncate max-w-full" title={repo.description}>{repo.description || 'No description'}</div>
+                    <div className="flex gap-4 text-xs text-text-secondary mt-auto">
+                      <span>⭐ {repo.stargazers_count}</span>
+                      <span>🍴 {repo.forks_count}</span>
+                      <span>🛠 {repo.language || 'N/A'}</span>
+                    </div>
+                    <div className="text-xs text-text-secondary mt-1 truncate">Updated {new Date(repo.updated_at).toLocaleDateString()}</div>
+                  </Card>
+                ))}
+              {githubRepos.length === 0 && (
+                <div className="col-span-full text-center py-8 text-text-secondary">
                   No repositories found. Add one to get started!
                 </div>
               )}
             </div>
-
-            {repoInfo && (
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4 flex items-center text-text-primary">
-                  Repository Activity
-                </h2>
-
-                {/* Pull Requests */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium mb-3 flex items-center">
-                    <GitPullRequest
-                      size={18}
-                      className="mr-2 text-accent-purple"
-                    />
-                    Pull Requests
-                  </h3>
-                  <div className="space-y-2">
-                    {Array.isArray(prs) && prs.length > 0 ? (
-                      prs.map((pr) => (
-                        <Card
-                          key={pr.id}
-                          className="p-4 hover:bg-white/5 transition-colors"
-                        >
-                          <div className="flex items-center">
-                            <GitPullRequest
-                              size={16}
-                              className="text-accent-purple mr-2"
-                            />
-                            <a
-                              href={pr.html_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:text-accent-purple"
-                            >
-                              {pr.title || "Untitled PR"}
-                            </a>
-                          </div>
-                          <div className="text-sm text-text-secondary mt-1">
-                            #{pr.number || "Unknown"} opened by{" "}
-                            {typeof pr.user === "object"
-                              ? pr.user?.login || "Unknown"
-                              : pr.user || "Unknown"}
-                          </div>
-                        </Card>
-                      ))
-                    ) : (
-                      <div className="text-center py-4 text-text-secondary">
-                        No pull requests found
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Issues */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium mb-3 flex items-center">
-                    <AlertCircle size={18} className="mr-2 text-accent-blue" />
-                    Issues
-                  </h3>
-                  <div className="space-y-2">
-                    {Array.isArray(issues) && issues.length > 0 ? (
-                      issues.map((issue) => (
-                        <Card
-                          key={issue.id}
-                          className="p-4 hover:bg-white/5 transition-colors"
-                        >
-                          <div className="flex items-center">
-                            <AlertCircle
-                              size={16}
-                              className="text-accent-blue mr-2"
-                            />
-                            <a
-                              href={issue.html_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:text-accent-blue"
-                            >
-                              {issue.title || "Untitled Issue"}
-                            </a>
-                          </div>
-                          <div className="text-sm text-text-secondary mt-1">
-                            #{issue.number || "Unknown"} opened by{" "}
-                            {typeof issue.user === "object"
-                              ? issue.user?.login || "Unknown"
-                              : issue.user || "Unknown"}
-                          </div>
-                        </Card>
-                      ))
-                    ) : (
-                      <div className="text-center py-4 text-text-secondary">
-                        No issues found
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Recent Commits */}
-                <div>
-                  <h3 className="text-lg font-medium mb-3 flex items-center">
-                    <FileCode2 size={18} className="mr-2 text-accent-green" />
-                    Recent Commits
-                  </h3>
-                  <div className="space-y-2">
-                    {Array.isArray(commits) && commits.length > 0 ? (
-                      commits.map((commit) => (
-                        <Card
-                          key={commit.sha}
-                          className="p-4 hover:bg-white/5 transition-colors"
-                        >
-                          <div className="flex items-center">
-                            <FileCode2
-                              size={16}
-                              className="text-accent-green mr-2"
-                            />
-                            <span className="font-mono text-sm">
-                              {commit.sha?.substring(0, 7) || "Unknown"}
-                            </span>
-                            <span className="mx-2">-</span>
-                            <span>{commit.message || "No message"}</span>
-                          </div>
-                          <div className="text-sm text-text-secondary mt-1">
-                            by{" "}
-                            {typeof commit.author === "object"
-                              ? commit.author?.login || "Unknown"
-                              : commit.author || "Unknown"}{" "}
-                            on{" "}
-                            {commit.date
-                              ? new Date(commit.date).toLocaleDateString()
-                              : "Unknown date"}
-                          </div>
-                        </Card>
-                      ))
-                    ) : (
-                      <div className="text-center py-4 text-text-secondary">
-                        No commits found
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
           </motion.div>
         </div>
       );
@@ -1458,18 +1573,7 @@ const Dashboard = () => {
   const [activeFilter, setActiveFilter] = useState("all");
 
   const renderTasksContent = () => {
-    // Filter tasks based on active filter
-    const filteredTasks = tasks.filter((task) => {
-      switch (activeFilter) {
-        case "in-progress":
-          return task.status === "in-progress";
-        case "completed":
-          return task.status === "completed";
-        case "all":
-        default:
-          return true;
-      }
-    });
+    const filteredTasks = getFilteredTasks();
 
     return (
       <>
@@ -1492,34 +1596,73 @@ const Dashboard = () => {
           </motion.p>
         </div>
 
-        <div className="flex justify-between mb-6">
-          <div className="flex space-x-2">
-            <Button
-              variant={activeFilter === "all" ? "primary" : "secondary"}
-              onClick={() => setActiveFilter("all")}
-            >
-              All Tasks
-            </Button>
-            {/* <Button
-              variant={activeFilter === "in-progress" ? "primary" : "secondary"}
-              onClick={() => setActiveFilter("in-progress")}
-            >
-              In Progress
-            </Button> */}
-            <Button
-              variant={activeFilter === "completed" ? "primary" : "secondary"}
-              onClick={() => setActiveFilter("completed")}
-            >
-              Completed
-            </Button>
+        {/* Search and Filter Section */}
+        <div className="mb-6 space-y-4">
+          {/* Search Bar */}
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Search tasks by title, description, or tags..."
+                value={taskSearchTerm}
+                onChange={(e) => setTaskSearchTerm(e.target.value)}
+                className="w-full bg-background border border-white/10 rounded-lg py-2 px-4 pl-10 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-green"
+              />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary"
+              />
+            </div>
+            {taskSearchTerm && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setTaskSearchTerm("")}
+              >
+                Clear
+              </Button>
+            )}
           </div>
-          {/* <Button 
-          variant="primary" 
-          icon={<Plus size={16} />}
-          onClick={() => setShowCreateForm(true)}
-        >
-          Add Task
-        </Button> */}
+
+          {/* Filter Buttons */}
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-2">
+              <Button
+                variant={taskFilter === "all" ? "primary" : "secondary"}
+                onClick={() => setTaskFilter("all")}
+              >
+                All Tasks
+              </Button>
+              <Button
+                variant={taskFilter === "pending" ? "primary" : "secondary"}
+                onClick={() => setTaskFilter("pending")}
+              >
+                Pending
+              </Button>
+              <Button
+                variant={taskFilter === "in-progress" ? "primary" : "secondary"}
+                onClick={() => setTaskFilter("in-progress")}
+              >
+                In Progress
+              </Button>
+              <Button
+                variant={taskFilter === "completed" ? "primary" : "secondary"}
+                onClick={() => setTaskFilter("completed")}
+              >
+                Completed
+              </Button>
+            </div>
+          </div>
+
+          {/* Results Summary */}
+          {taskSearchTerm || taskFilter !== "all" ? (
+            <div className="text-sm text-text-secondary">
+              Showing {filteredTasks.length} of {tasks.length}{" "}
+              tasks
+              {taskSearchTerm && ` matching "${taskSearchTerm}"`}
+              {taskFilter !== "all" && ` (${taskFilter.replace("-", " ")})`}
+            </div>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1538,11 +1681,9 @@ const Dashboard = () => {
           ))}
           {filteredTasks.length === 0 && (
             <div className="col-span-3 text-center py-8 text-text-secondary">
-              {activeFilter === "all"
+              {taskFilter === "all" && !taskSearchTerm
                 ? "No tasks found. Create one to get started!"
-                : `No ${
-                    activeFilter === "in-progress" ? "in progress" : "completed"
-                  } tasks found.`}
+                : `No tasks found matching your criteria.`}
             </div>
           )}
         </div>
@@ -1585,7 +1726,8 @@ const Dashboard = () => {
               <input
                 type="text"
                 className="w-full bg-background-lighter border border-white/10 rounded-lg py-2 px-3"
-                defaultValue={user?.displayName || "User"}
+                value={displayName}
+                onChange={e => setDisplayName(e.target.value)}
               />
             </div>
             <div>
@@ -1601,7 +1743,7 @@ const Dashboard = () => {
             </div>
             <Button
               variant="primary"
-              onClick={handleButtonClick(() => alert("Profile updated!"))}
+              onClick={handleButtonClick(handleDisplayNameUpdate)}
             >
               Update Profile
             </Button>
@@ -1705,43 +1847,79 @@ const Dashboard = () => {
             <div className="p-4 border border-white/10 rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium">Jira Integration</h3>
-                <span className="px-2 py-0.5 text-xs bg-accent-green/20 text-accent-green-light rounded-full">
-                  Connected
+                <span className={`px-2 py-0.5 text-xs rounded-full ${
+                  jiraConnected 
+                    ? 'bg-accent-green/20 text-accent-green-light' 
+                    : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {jiraConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
               <p className="text-sm text-text-secondary mb-3">
-                Connected to Jira Cloud
+                {jiraConnected ? 'Connected to Jira Cloud' : 'Not connected to Jira'}
               </p>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleButtonClick(() => alert("Jira disconnected!"))}
-              >
-                Disconnect
-              </Button>
+              {jiraConnected ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleButtonClick(handleJiraDisconnect)}
+                >
+                  Disconnect
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleButtonClick(() => setShowJiraForm(true))}
+                >
+                  Connect
+                </Button>
+              )}
             </div>
             <div className="p-4 border border-white/10 rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium">GitHub Integration</h3>
-                <span className="px-2 py-0.5 text-xs bg-accent-green/20 text-accent-green-light rounded-full">
-                  Connected
+                <span className={`px-2 py-0.5 text-xs rounded-full ${
+                  githubConnected 
+                    ? 'bg-accent-green/20 text-accent-green-light' 
+                    : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {githubConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
               <p className="text-sm text-text-secondary mb-3">
-                Connected to GitHub
+                {githubConnected ? 'Connected to GitHub' : 'Not connected to GitHub'}
               </p>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleButtonClick(() => alert("GitHub disconnected!"))}
-              >
-                Disconnect
-              </Button>
+              {githubConnected ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleButtonClick(handleGitHubDisconnect)}
+                >
+                  Disconnect
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleButtonClick(() => setShowGitHubForm(true))}
+                >
+                  Connect
+                </Button>
+              )}
             </div>
           </div>
         </Card>
       </div>
     </>
+  );
+
+  const renderDocumentationContent = () => (
+    <div className="min-h-screen p-8">
+      <h1 className="text-2xl font-bold mb-4">Documentation</h1>
+      <p className="text-text-secondary mb-4">Store and refer to your project documentation here.</p>
+      <Documentation />
+    </div>
   );
 
   const renderContent = () => {
@@ -1764,6 +1942,9 @@ const Dashboard = () => {
         case "tasks":
           console.log("Rendering Tasks content");
           return renderTasksContent();
+        case "documentation":
+          console.log("Rendering Documentation content");
+          return renderDocumentationContent();
         case "settings":
           console.log("Rendering Settings content");
           return renderSettingsContent();
@@ -1800,26 +1981,33 @@ const Dashboard = () => {
         onTicketUpdate={handleJiraTicketUpdate}
       />
 
-      {showCreateForm && activeTab === "jira" && (
+      {showCreateTaskForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background-lighter p-6 rounded-lg w-full max-w-lg">
-            <CreateJiraTicketForm
-              onTicketCreated={() => {
-                setShowCreateForm(false);
-                handleRefresh();
-              }}
+            <TaskForm
+              onSubmit={handleAddTask}
+              onCancel={() => setShowCreateTaskForm(false)}
             />
-            <Button
-              variant="secondary"
-              onClick={() => setShowCreateForm(false)}
-            >
-              Cancel
-            </Button>
           </div>
         </div>
       )}
 
-      {showCreateForm && activeTab === "github" && (
+      {showCreateJiraForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background-lighter p-6 rounded-lg w-full max-w-lg">
+            <CreateJiraTicketForm 
+              onTicketCreated={() => {
+                setShowCreateJiraForm(false);
+                handleRefresh();
+              }}
+              onCancel={() => setShowCreateJiraForm(false)}
+              jiraConnected={jiraConnected}
+            />
+          </div>
+        </div>
+      )}
+
+      {showAddRepoForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background-lighter p-6 rounded-lg w-full max-w-lg">
             <h2 className="text-xl font-semibold mb-4">
@@ -1855,73 +2043,26 @@ const Dashboard = () => {
         </div>
       )}
 
-      {showCreateForm && activeTab === "tasks" && (
+      {/* GitHub Credentials Form Modal */}
+      {showGitHubForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background-lighter p-6 rounded-lg w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddTask({
-                  title: e.target.title.value,
-                  description: e.target.description.value,
-                  dueDate: e.target.dueDate.value,
-                  priority: e.target.priority.value,
-                  tags: e.target.tags.value
-                    .split(",")
-                    .map((tag) => tag.trim())
-                    .filter(Boolean),
-                });
-              }}
-            >
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="Task title"
-                  className="w-full bg-background border border-white/10 rounded-lg py-2 px-3"
-                  required
-                />
-                <textarea
-                  name="description"
-                  placeholder="Task description"
-                  className="w-full bg-background border border-white/10 rounded-lg py-2 px-3"
-                  required
-                />
-                <input
-                  type="date"
-                  name="dueDate"
-                  className="w-full bg-background border border-white/10 rounded-lg py-2 px-3"
-                  required
-                />
-                <select
-                  name="priority"
-                  className="w-full bg-background border border-white/10 rounded-lg py-2 px-3"
-                  required
-                >
-                  <option value="low">Low Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="high">High Priority</option>
-                </select>
-                <input
-                  type="text"
-                  name="tags"
-                  placeholder="Tags (comma-separated)"
-                  className="w-full bg-background border border-white/10 rounded-lg py-2 px-3"
-                />
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowCreateForm(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" variant="primary">
-                    Create Task
-                  </Button>
-                </div>
-              </div>
-            </form>
+          <div className="bg-background-lighter rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <GitHubCredentialsForm
+              onSuccess={handleGitHubConnectSuccess}
+              onCancel={() => setShowGitHubForm(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Jira Credentials Form Modal */}
+      {showJiraForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background-lighter rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <JiraCredentialsForm
+              onSuccess={handleJiraConnectSuccess}
+              onCancel={() => setShowJiraForm(false)}
+            />
           </div>
         </div>
       )}
@@ -1967,6 +2108,16 @@ const Dashboard = () => {
       localStorage.setItem("selectedRepo", repoPath);
       setSelectedRepo(repoPath);
       setShowAddRepoForm(false);
+      // Fetch details for the manually added repo and add to githubRepos
+      const res = await fetch(`/api/github/summary?repo=${repoPath}`);
+      const data = await res.json();
+      if (data && data.repo) {
+        setGithubRepos(prev => {
+          // Avoid duplicates
+          if (prev.some(r => r.full_name === data.repo.full_name)) return prev;
+          return [data.repo, ...prev];
+        });
+      }
       await fetchGithubData();
       showToast(
         `GitHub repository "${repoPath}" connected successfully!`,
@@ -1978,6 +2129,40 @@ const Dashboard = () => {
     }
   };
 
+  // Handle scroll lock for modals
+  useEffect(() => {
+    if (showCreateTaskForm || showCreateJiraForm || showAddRepoForm) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateTaskForm, showCreateJiraForm, showAddRepoForm]);
+
+  // Handle keyboard events for modals
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        if (showCreateTaskForm) setShowCreateTaskForm(false);
+        if (showCreateJiraForm) setShowCreateJiraForm(false);
+        if (showAddRepoForm) setShowAddRepoForm(false);
+      }
+    };
+
+    if (showCreateTaskForm || showCreateJiraForm || showAddRepoForm) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showCreateTaskForm, showCreateJiraForm, showAddRepoForm]);
+
+
+
   // Render modals for create actions
   const renderCreateModals = () => (
     <AnimatePresence>
@@ -1986,9 +2171,10 @@ const Dashboard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          onClick={() => setShowCreateTaskForm(false)}
         >
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <TaskForm
               onSubmit={handleTaskSubmit}
               onCancel={() => setShowCreateTaskForm(false)}
@@ -2002,10 +2188,15 @@ const Dashboard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          onClick={() => setShowCreateJiraForm(false)}
         >
-          <div className="w-full max-w-lg">
-            <CreateJiraTicketForm onTicketCreated={handleJiraTicketSubmit} />
+          <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <CreateJiraTicketForm 
+              onTicketCreated={handleJiraTicketSubmit}
+              onCancel={() => setShowCreateJiraForm(false)}
+              jiraConnected={jiraConnected}
+            />
           </div>
         </motion.div>
       )}
@@ -2015,18 +2206,94 @@ const Dashboard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          onClick={() => setShowAddRepoForm(false)}
         >
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <AddRepoForm
               onSubmit={handleRepoSubmit}
               onCancel={() => setShowAddRepoForm(false)}
+              onOpenGlobalRepoSearch={() => setShowGlobalRepoSearch(true)}
             />
           </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
+
+  // Update display name handler
+  const handleDisplayNameUpdate = async () => {
+    try {
+      await updateProfile(auth.currentUser, { displayName });
+      showToast("Display name updated!", "success");
+    } catch (error) {
+      showToast("Failed to update display name", "error");
+    }
+  };
+
+  const [globalRepoQuery, setGlobalRepoQuery] = useState("");
+  const [globalRepoResults, setGlobalRepoResults] = useState([]);
+  const [globalRepoLoading, setGlobalRepoLoading] = useState(false);
+  const [showGlobalRepoResults, setShowGlobalRepoResults] = useState(false);
+
+  const handleGlobalRepoSearch = async () => {
+    if (!globalRepoQuery.trim()) return;
+    setGlobalRepoLoading(true);
+    setShowGlobalRepoResults(true);
+    // TODO: Replace with real API call
+    setTimeout(() => {
+      setGlobalRepoResults([
+        {
+          id: 1,
+          full_name: "facebook/react",
+          description: "A declarative, efficient, and flexible JavaScript library for building user interfaces.",
+          stargazers_count: 210000,
+          html_url: "https://github.com/facebook/react",
+        },
+        {
+          id: 2,
+          full_name: "vercel/next.js",
+          description: "The React Framework",
+          stargazers_count: 120000,
+          html_url: "https://github.com/vercel/next.js",
+        },
+      ]);
+      setGlobalRepoLoading(false);
+    }, 1000);
+  };
+
+  // Add state for all repos and search
+  const [githubRepos, setGithubRepos] = useState([]);
+  const [repoSearch, setRepoSearch] = useState("");
+
+  // Fetch all repos after connecting
+  useEffect(() => {
+    if (githubConnected) {
+      fetch("/api/github/repos")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setGithubRepos(data);
+        });
+    }
+  }, [githubConnected]);
+
+  const [selectedRepoSummary, setSelectedRepoSummary] = useState(null);
+  const [showRepoModal, setShowRepoModal] = useState(false);
+  const [repoModalLoading, setRepoModalLoading] = useState(false);
+
+  const handleRepoTileClick = async (repo) => {
+    setRepoModalLoading(true);
+    setShowRepoModal(true);
+    try {
+      const res = await fetch(`/api/github/summary?repo=${repo.full_name}`);
+      const data = await res.json();
+      setSelectedRepoSummary({ ...data, ...repo });
+    } catch (e) {
+      setSelectedRepoSummary({ error: 'Failed to fetch repo details.' });
+    } finally {
+      setRepoModalLoading(false);
+    }
+  };
 
   return (
     <DashboardLayout
@@ -2074,22 +2341,31 @@ const Dashboard = () => {
           >
             {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
-
-          {(activeTab === "jira" ||
-            activeTab === "github" ||
-            activeTab === "tasks") && (
+          {activeTab === "jira" && (
             <Button
               variant="primary"
               icon={<Plus size={16} />}
-              onClick={() => setShowCreateForm(true)}
+              onClick={() => setShowCreateJiraForm(true)}
             >
-              {activeTab === "jira"
-                ? "New Ticket"
-                : activeTab === "github"
-                ? "Add Repo"
-                : activeTab === "tasks"
-                ? "New Task"
-                : "New Item"}
+              New Ticket
+            </Button>
+          )}
+          {activeTab === "github" && (
+            <Button
+              variant="primary"
+              icon={<Plus size={16} />}
+              onClick={() => setShowAddRepoForm(true)}
+            >
+              Add Repository
+            </Button>
+          )}
+          {activeTab === "tasks" && (
+            <Button
+              variant="primary"
+              icon={<Plus size={16} />}
+              onClick={() => setShowCreateTaskForm(true)}
+            >
+              New Task
             </Button>
           )}
         </motion.div>
@@ -2112,12 +2388,120 @@ const Dashboard = () => {
       {renderModals()}
 
       {/* Create action button and modals */}
-      <CreateActionButton
-        onCreateTask={handleCreateTask}
-        onCreateJiraTicket={handleCreateJiraTicket}
-        onAddGithubRepo={handleAddGithubRepo}
-      />
+      {activeTab !== "github" && (
+        <CreateActionButton
+          onCreateTask={handleCreateTask}
+          onCreateJiraTicket={handleCreateJiraTicket}
+          onAddGithubRepo={handleAddGithubRepo}
+        />
+      )}
       {renderCreateModals()}
+
+      {showGlobalRepoResults && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background-lighter rounded-lg w-full max-w-2xl p-6">
+            <h2 className="text-xl font-semibold mb-4">Global GitHub Repository Search</h2>
+            <div className="mb-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  className="flex-1 p-2 rounded border border-white/10 bg-background"
+                  placeholder="Global GitHub repository search (e.g. react, next.js, owner/repo)"
+                  value={globalRepoQuery}
+                  onChange={e => setGlobalRepoQuery(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleGlobalRepoSearch(); }}
+                />
+                <Button variant="primary" onClick={handleGlobalRepoSearch} isLoading={globalRepoLoading}>
+                  Search
+                </Button>
+                {showGlobalRepoResults && (
+                  <Button variant="secondary" onClick={() => setShowGlobalRepoResults(false)}>
+                    Close
+                  </Button>
+                )}
+              </div>
+              {showGlobalRepoResults && (
+                <div className="bg-background-lighter border border-white/10 rounded-lg mt-2 p-4 max-h-96 overflow-y-auto shadow-lg z-40">
+                  {globalRepoLoading && <div>Loading...</div>}
+                  {!globalRepoLoading && globalRepoResults.length === 0 && <div className="text-text-secondary">No results yet.</div>}
+                  {!globalRepoLoading && globalRepoResults.map(repo => (
+                    <div key={repo.id} className="p-4 rounded bg-background border border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
+                      <div>
+                        <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-blue hover:underline">{repo.full_name}</a>
+                        <div className="text-sm text-text-secondary">{repo.description}</div>
+                      </div>
+                      <div className="text-xs text-text-secondary">⭐ {repo.stargazers_count}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRepoModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center" style={{overflowY: 'auto'}}>
+          <div className="bg-background-lighter rounded-2xl shadow-2xl w-full max-w-2xl p-8 relative animate-fadeIn" onClick={e => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-text-secondary hover:text-text-primary" onClick={() => { setShowRepoModal(false); setSelectedRepoSummary(null); }}>&times;</button>
+            {repoModalLoading ? (
+              <div className="flex items-center justify-center min-h-[200px]">Loading...</div>
+            ) : selectedRepoSummary && !selectedRepoSummary.error ? (
+              <>
+                <div className="flex items-center gap-4 mb-4">
+                  <img src={selectedRepoSummary.owner?.avatar_url} alt={selectedRepoSummary.owner?.login} className="w-10 h-10 rounded-full" />
+                  <div>
+                    <a href={selectedRepoSummary.html_url} target="_blank" rel="noopener noreferrer" className="text-xl font-bold text-accent-blue hover:underline block">
+                      {selectedRepoSummary.full_name}
+                    </a>
+                    <div className="text-sm text-text-secondary">{selectedRepoSummary.description}</div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-6 mb-4">
+                  <div><b>Language:</b> {selectedRepoSummary.language || 'N/A'}</div>
+                  <div><b>Stars:</b> {selectedRepoSummary.stargazers_count}</div>
+                  <div><b>Forks:</b> {selectedRepoSummary.forks_count}</div>
+                  <div><b>Open Issues:</b> {selectedRepoSummary.issues?.length ?? selectedRepoSummary.open_issues_count}</div>
+                  <div><b>Pull Requests:</b> {selectedRepoSummary.pulls?.length ?? 0}</div>
+                  <div><b>Last Updated:</b> {new Date(selectedRepoSummary.updated_at).toLocaleString()}</div>
+                </div>
+                <div className="mb-2 font-semibold">Recent Commits:</div>
+                <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
+                  {selectedRepoSummary.commits && selectedRepoSummary.commits.length > 0 ? selectedRepoSummary.commits.map(commit => (
+                    <div key={commit.sha} className="bg-background p-2 rounded text-xs text-text-secondary">
+                      <span className="font-mono">{commit.sha.substring(0, 7)}</span>: {commit.message}
+                      <span className="ml-2">by {commit.author}</span>
+                      <span className="ml-2">{commit.date ? new Date(commit.date).toLocaleString() : ''}</span>
+                    </div>
+                  )) : <div className="text-text-secondary text-xs">No recent commits</div>}
+                </div>
+                <div className="mb-2 font-semibold">Open Issues:</div>
+                <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
+                  {selectedRepoSummary.issues && selectedRepoSummary.issues.length > 0 ? selectedRepoSummary.issues.map(issue => (
+                    <div key={issue.id} className="bg-background p-2 rounded text-xs text-text-secondary">
+                      <a href={issue.html_url} target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">{issue.title}</a>
+                      <span className="ml-2">#{issue.number}</span>
+                      <span className="ml-2">by {issue.user?.login}</span>
+                    </div>
+                  )) : <div className="text-text-secondary text-xs">No open issues</div>}
+                </div>
+                <div className="mb-2 font-semibold">Pull Requests:</div>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {selectedRepoSummary.pulls && selectedRepoSummary.pulls.length > 0 ? selectedRepoSummary.pulls.map(pr => (
+                    <div key={pr.id} className="bg-background p-2 rounded text-xs text-text-secondary">
+                      <a href={pr.html_url} target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">{pr.title}</a>
+                      <span className="ml-2">#{pr.number}</span>
+                      <span className="ml-2">by {pr.user?.login}</span>
+                    </div>
+                  )) : <div className="text-text-secondary text-xs">No pull requests</div>}
+                </div>
+              </>
+            ) : (
+              <div className="text-red-400">{selectedRepoSummary?.error || 'Failed to load repository details.'}</div>
+            )}
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

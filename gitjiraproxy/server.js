@@ -218,9 +218,119 @@ app.post("/api/devcoach", async (req, res) => {
   }
 });
 
+// Add Jira 'myself' proxy endpoint for connection testing
+app.get("/api/jira-proxy/myself", async (req, res) => {
+  const auth = req.query.auth;
+  if (!auth) {
+    return res.status(400).json({ error: "Missing auth parameter" });
+  }
+  try {
+    const response = await fetch(
+      `https://${JIRA_DOMAIN}/rest/api/3/myself`,
+      {
+        headers: {
+          Authorization: decodeURIComponent(auth),
+          Accept: "application/json",
+        },
+      }
+    );
+    const data = await response.json();
+    if (response.ok) {
+      res.json(data);
+    } else {
+      res.status(response.status).json({ error: data });
+    }
+  } catch (err) {
+    console.error("Error fetching Jira myself:", err);
+    res.status(500).json({ error: "Failed to connect to Jira" });
+  }
+});
 
+app.get("/api/github/repos", async (req, res) => {
+  try {
+    const response = await fetch(
+      `https://api.github.com/user/repos?sort=updated&per_page=100`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+          Accept: "application/vnd.github+json",
+        },
+      }
+    );
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      return res.status(400).json({ error: "Invalid GitHub response", data });
+    }
+    // Optionally, map to only needed fields for frontend
+    res.json(
+      data.map(repo => ({
+        id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        description: repo.description,
+        html_url: repo.html_url,
+        stargazers_count: repo.stargazers_count,
+        forks_count: repo.forks_count,
+        open_issues_count: repo.open_issues_count,
+        language: repo.language,
+        updated_at: repo.updated_at,
+        private: repo.private,
+        owner: {
+          login: repo.owner.login,
+          avatar_url: repo.owner.avatar_url,
+        },
+      }))
+    );
+  } catch (err) {
+    console.error("GitHub repos fetch error:", err);
+    res.status(500).json({ error: "Failed to fetch GitHub repositories" });
+  }
+});
 
-const PORT = process.env.PORT || 5000;
+// --- Confluence Proxy Endpoints ---
+const CONFLUENCE_EMAIL = process.env.JIRA_EMAIL;
+const CONFLUENCE_API_TOKEN = process.env.JIRA_API_TOKEN;
+const CONFLUENCE_DOMAIN = process.env.JIRA_DOMAIN;
+const CONFLUENCE_BASE = `https://${CONFLUENCE_DOMAIN}/wiki/rest/api`;
+const CONFLUENCE_AUTH_HEADER = 'Basic ' + Buffer.from(`${CONFLUENCE_EMAIL}:${CONFLUENCE_API_TOKEN}`).toString('base64');
+
+// Get Confluence spaces
+app.get('/api/confluence/spaces', async (req, res) => {
+  try {
+    const response = await fetch(`${CONFLUENCE_BASE}/space`, {
+      headers: {
+        'Authorization': CONFLUENCE_AUTH_HEADER,
+        'Accept': 'application/json',
+      },
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Confluence fetch spaces error:', err);
+    res.status(500).json({ error: 'Failed to fetch Confluence spaces' });
+  }
+});
+
+// Get Confluence pages in a space
+app.get('/api/confluence/pages', async (req, res) => {
+  const { spaceKey } = req.query;
+  if (!spaceKey) return res.status(400).json({ error: 'Missing spaceKey parameter' });
+  try {
+    const response = await fetch(`${CONFLUENCE_BASE}/content?spaceKey=${spaceKey}&expand=body.storage`, {
+      headers: {
+        'Authorization': CONFLUENCE_AUTH_HEADER,
+        'Accept': 'application/json',
+      },
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Confluence fetch pages error:', err);
+    res.status(500).json({ error: 'Failed to fetch Confluence pages' });
+  }
+});
+
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () =>
   console.log(`Jira proxy server running on port ${PORT}`)
 );

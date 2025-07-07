@@ -43,6 +43,13 @@ const DevCoach = () => {
     }
   };
 
+  const handleInputKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleAsk();
+    }
+  };
+
   return (
     <div className="h-full p-6 flex flex-col items-center">
       <div className="w-full max-w-2xl flex flex-col h-full">
@@ -53,18 +60,22 @@ const DevCoach = () => {
         </h2>
 
         {/* Message Container */}
-        <div className="flex-1 overflow-y-auto bg-background-lighter p-4 rounded-lg border border-white/10 space-y-3 mb-4">
+        <div className="flex-1 overflow-y-auto bg-background-lighter p-4 rounded-lg border border-white/10 space-y-8 mb-4">
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`p-3 rounded-lg whitespace-pre-wrap ${
-                msg.role === "user"
-                  ? "bg-accent-purple/10 text-accent-purple"
-                  : "bg-accent-blue/10 text-accent-blue markdown-body"
-              }`}
+              className={`max-w-[80%] p-4 rounded-2xl whitespace-pre-wrap flex flex-col shadow-lg border
+                ${msg.role === "user"
+                  ? "ml-auto bg-accent-purple/20 text-accent-purple items-end border-accent-purple/30"
+                  : "mr-auto bg-accent-blue/20 text-accent-blue items-start border-accent-blue/30"}
+              `}
             >
-              <strong>{msg.role === "user" ? "You" : "DevCoach"}:</strong>{" "}
-              <ReactMarkdown>{msg.content}</ReactMarkdown>
+              <span className="font-semibold text-xs mb-2 opacity-80 tracking-wide">
+                {msg.role === "user" ? "You" : "DevCoach"}
+              </span>
+              <span className="text-base">
+                <ReactMarkdown>{msg.content}</ReactMarkdown>
+              </span>
             </div>
           ))}
         </div>
@@ -74,7 +85,8 @@ const DevCoach = () => {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 p-2 rounded-lg bg-background-lighter border border-white/10 text-sm text-text-primary"
+            onKeyDown={handleInputKeyDown}
+            className="flex-1 p-3 rounded-xl bg-background-lighter border border-white/10 text-base text-text-primary shadow-sm"
             placeholder="Ask me about commits, issues, or anything dev-related..."
           />
           <button

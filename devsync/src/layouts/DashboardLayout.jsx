@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { auth } from "../firebase";
 import { FaGithub } from "react-icons/fa";
@@ -12,7 +12,11 @@ import {
   Search,
   Bell,
   User,
-  Bot
+  Bot,
+  X,
+  ChevronUp,
+  ChevronDown,
+  FileText
 } from "lucide-react";
 import { useSound } from "../components/ThemeProvider";
 import { signOut } from "firebase/auth";
@@ -21,11 +25,19 @@ const DashboardLayout = ({
   children,
   activeTab = "dashboard",
   onTabChange,
+  user,
+  onLogout,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [currentResultIndex, setCurrentResultIndex] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
   const { enabled: soundEnabled, playSound } = useSound();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const navItems = [
     {
@@ -36,6 +48,11 @@ const DashboardLayout = ({
     { id: "jira", label: "Jira", icon: <SiJira size={20} /> },
     { id: "github", label: "GitHub", icon: <FaGithub size={20} /> },
     { id: "tasks", label: "Tasks", icon: <CheckSquare size={20} /> },
+    {
+      id: "documentation",
+      label: "Documentation",
+      icon: <FileText size={20} />,
+    },
     {
       id: "ai",
       label: "DevCoach",
@@ -57,6 +74,136 @@ const DashboardLayout = ({
     if (soundEnabled) playSound("whoosh");
     if (onTabChange) onTabChange(tabId);
   };
+
+  // Global search functionality
+  const performSearch = (term) => {
+    if (!term.trim()) {
+      setSearchResults([]);
+      setCurrentResultIndex(0);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const results = [];
+    const searchRegex = new RegExp(term, 'gi');
+    
+    // Search through all text content in the main content area
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+      const walker = document.createTreeWalker(
+        mainContent,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+
+      let node;
+      let nodeIndex = 0;
+      while (node = walker.nextNode()) {
+        const text = node.textContent;
+        const matches = text.match(searchRegex);
+        
+        if (matches) {
+          const parentElement = node.parentElement;
+          if (parentElement && parentElement.offsetParent !== null) { // Check if element is visible
+            results.push({
+              element: parentElement,
+              text: text,
+              matches: matches.length,
+              nodeIndex: nodeIndex
+            });
+          }
+        }
+        nodeIndex++;
+      }
+    }
+
+    setSearchResults(results);
+    setCurrentResultIndex(0);
+    setIsSearching(false);
+  };
+
+  const handleSearchChange = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    performSearch(term);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setSearchResults([]);
+    setCurrentResultIndex(0);
+    setIsSearching(false);
+  };
+
+  const navigateToResult = (direction) => {
+    if (searchResults.length === 0) return;
+    
+    let newIndex;
+    if (direction === 'next') {
+      newIndex = (currentResultIndex + 1) % searchResults.length;
+    } else {
+      newIndex = currentResultIndex === 0 ? searchResults.length - 1 : currentResultIndex - 1;
+    }
+    
+    setCurrentResultIndex(newIndex);
+    
+    // Scroll to the result
+    const result = searchResults[newIndex];
+    if (result && result.element) {
+      result.element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      
+      // Highlight the element temporarily
+      result.element.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+      setTimeout(() => {
+        result.element.style.backgroundColor = '';
+      }, 2000);
+    }
+  };
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+F to focus search
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.getElementById('global-search-input');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+      }
+      
+      // Enter to navigate through results
+      if (e.key === 'Enter' && searchTerm && searchResults.length > 0) {
+        e.preventDefault();
+        navigateToResult('next');
+      }
+      
+      // Escape to clear search
+      if (e.key === 'Escape' && searchTerm) {
+        e.preventDefault();
+        clearSearch();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [searchTerm, searchResults, currentResultIndex]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-text-primary flex">
@@ -141,18 +288,67 @@ const DashboardLayout = ({
             <div className="relative">
               <div
                 className={`flex items-center bg-background-lighter rounded-lg px-3 py-1.5 transition-all ${
-                  searchFocused ? "ring-2 ring-accent-blue/50 w-64" : "w-48"
+                  searchFocused ? "ring-2 ring-accent-blue/50 w-80" : "w-64"
                 }`}
               >
                 <Search size={18} className="text-text-muted mr-2" />
                 <input
+                  id="global-search-input"
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search (Ctrl+F)..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
                   className="bg-transparent border-none outline-none text-sm w-full text-text-primary placeholder:text-text-muted"
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
                 />
+                
+                {searchTerm && (
+                  <div className="flex items-center space-x-1">
+                    {searchResults.length > 0 && (
+                      <div className="flex items-center text-xs text-text-secondary">
+                        <span>{currentResultIndex + 1}</span>
+                        <span>/</span>
+                        <span>{searchResults.length}</span>
+                      </div>
+                    )}
+                    
+                    {searchResults.length > 0 && (
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => navigateToResult('prev')}
+                          className="p-1 hover:bg-white/10 rounded text-text-secondary hover:text-text-primary"
+                          title="Previous result"
+                        >
+                          <ChevronUp size={14} />
+                        </button>
+                        <button
+                          onClick={() => navigateToResult('next')}
+                          className="p-1 hover:bg-white/10 rounded text-text-secondary hover:text-text-primary"
+                          title="Next result"
+                        >
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                    )}
+                    
+                    <button
+                      onClick={clearSearch}
+                      className="p-1 hover:bg-white/10 rounded text-text-secondary hover:text-text-primary"
+                      title="Clear search"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
+              
+              {/* Search results indicator */}
+              {searchResults.length > 0 && (
+                <div className="absolute top-full left-0 mt-1 bg-background-lighter border border-white/10 rounded-lg px-3 py-2 text-xs text-text-secondary">
+                  Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                </div>
+              )}
             </div>
           </div>
 
@@ -168,13 +364,43 @@ const DashboardLayout = ({
               </span>
             </button>
 
-            {/* User Avatar */}
-            <button
-              className="h-8 w-8 rounded-full bg-background-lighter border border-white/10 flex items-center justify-center overflow-hidden"
-              onClick={() => handleTabClick("settings")}
-            >
-              <User size={16} />
-            </button>
+            {/* User Avatar with Dropdown */}
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                className="h-8 w-8 rounded-full bg-background-lighter border border-white/10 flex items-center justify-center overflow-hidden"
+                onClick={() => setProfileMenuOpen((open) => !open)}
+              >
+                <User size={16} />
+              </button>
+              {profileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-background-lighter border border-white/10 rounded-lg shadow-lg z-50 p-3">
+                  <div className="mb-2 px-2 py-1 text-sm text-text-primary font-semibold">
+                    {user?.displayName || 'User'}
+                  </div>
+                  <div className="mb-2 px-2 py-1 text-xs text-text-secondary truncate">
+                    {user?.email || ''}
+                  </div>
+                  <button
+                    className="w-full text-left px-2 py-2 rounded hover:bg-accent-blue/10 text-text-primary text-sm"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      onTabChange && onTabChange('settings');
+                    }}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    className="w-full text-left px-2 py-2 rounded hover:bg-red-500/10 text-red-400 text-sm"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      onLogout && onLogout();
+                    }}
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

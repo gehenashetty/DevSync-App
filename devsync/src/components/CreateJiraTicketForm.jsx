@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Button from "./ui/Button";
 import Card from "./ui/Card";
-import { FileText, Tag, MessageSquare, AlertTriangle } from "lucide-react";
+import { FileText, Tag, MessageSquare, AlertTriangle, X } from "lucide-react";
 import "./CreateJiraTicketForm.css";
 
-const CreateJiraTicketForm = ({ onTicketCreated }) => {
+const CreateJiraTicketForm = ({ onTicketCreated, onCancel, jiraConnected }) => {
   const [summary, setSummary] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState(null);
@@ -17,7 +17,7 @@ const CreateJiraTicketForm = ({ onTicketCreated }) => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/jira/create", {
+      const response = await fetch("http://localhost:3001/api/jira/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,12 +65,55 @@ const CreateJiraTicketForm = ({ onTicketCreated }) => {
     }
   };
 
+  if (!jiraConnected) {
+    return (
+      <Card variant="blue" className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-display font-semibold flex items-center text-red-300">
+            <FileText size={20} className="mr-2 text-red-300" />
+            Create Jira Ticket
+          </h2>
+          {onCancel && (
+            <motion.button
+              onClick={onCancel}
+              className="text-text-secondary hover:text-text-primary p-1 rounded-full hover:bg-white/10"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <X size={18} />
+            </motion.button>
+          )}
+        </div>
+        <div className="flex flex-col items-center justify-center py-8">
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg text-sm">
+            <strong>Not connected to Jira.</strong> Please connect your Jira account in Settings to create tickets.
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card variant="blue" className="p-6">
-      <h2 className="text-xl font-display font-semibold mb-4 flex items-center">
-        <FileText size={20} className="mr-2 text-accent-blue" />
-        Create Jira Ticket
-      </h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-display font-semibold flex items-center">
+          <FileText size={20} className="mr-2 text-accent-blue" />
+          Create Jira Ticket
+        </h2>
+        {onCancel && (
+          <motion.button
+            onClick={onCancel}
+            className="text-text-secondary hover:text-text-primary p-1 rounded-full hover:bg-white/10"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <X size={18} />
+          </motion.button>
+        )}
+      </div>
 
       {status && (
         <motion.div

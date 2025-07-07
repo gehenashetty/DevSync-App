@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, FileText, Github, CheckSquare } from 'lucide-react';
 import Button from './Button';
@@ -8,6 +8,36 @@ import './CreateActionButton.css';
 const CreateActionButton = ({ onCreateTask, onCreateJiraTicket, onAddGithubRepo }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { playSound, enabled: soundEnabled } = useSound();
+
+  // Handle body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore background scrolling
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (!isOpen) return;
+      
+      if (event.key === 'Escape') {
+        handleClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -144,7 +174,7 @@ const CreateActionButton = ({ onCreateTask, onCreateJiraTicket, onAddGithubRepo 
           <>
             {/* Backdrop */}
             <motion.div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
               initial="hidden"
               animate="visible"
               exit="exit"
@@ -154,50 +184,53 @@ const CreateActionButton = ({ onCreateTask, onCreateJiraTicket, onAddGithubRepo 
 
             {/* Modal */}
             <motion.div
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md"
+              className="fixed inset-0 z-[70] flex items-center justify-center p-4"
               initial="hidden"
               animate="visible"
               exit="exit"
               variants={modalVariants}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-background-lighter border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-white/10">
-                  <h3 className="text-xl font-semibold text-text-primary">Create New</h3>
-                  <motion.button
-                    onClick={handleClose}
-                    className="p-1 rounded-full hover:bg-white/10 text-text-secondary"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <X size={20} />
-                  </motion.button>
-                </div>
+              <div className="w-full max-w-md">
+                <div className="bg-background-lighter border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-5 border-b border-white/10">
+                    <h3 className="text-xl font-semibold text-text-primary">Create New</h3>
+                    <motion.button
+                      onClick={handleClose}
+                      className="p-1 rounded-full hover:bg-white/10 text-text-secondary"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <X size={20} />
+                    </motion.button>
+                  </div>
 
-                {/* Content */}
-                <div className="p-5">
-                  <div className="space-y-3">
-                    {actionItems.map((item, index) => (
-                      <motion.div
-                        key={item.id}
-                        custom={index}
-                        initial="hidden"
-                        animate="visible"
-                        variants={itemVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                        onClick={() => handleAction(item.id)}
-                        className={`create-modal-item p-4 rounded-lg cursor-pointer border border-white/5 flex items-center space-x-4 transition-all bg-gradient-to-r ${item.gradient}`}
-                      >
-                        <div className="create-modal-icon p-3 rounded-lg bg-background-darker">
-                          {item.icon}
-                        </div>
-                        <div>
-                          <h4 className="text-text-primary font-medium">{item.title}</h4>
-                          <p className="text-text-secondary text-sm">{item.description}</p>
-                        </div>
-                      </motion.div>
-                    ))}
+                  {/* Content */}
+                  <div className="p-5">
+                    <div className="space-y-3">
+                      {actionItems.map((item, index) => (
+                        <motion.div
+                          key={item.id}
+                          custom={index}
+                          initial="hidden"
+                          animate="visible"
+                          variants={itemVariants}
+                          whileHover="hover"
+                          whileTap="tap"
+                          onClick={() => handleAction(item.id)}
+                          className={`create-modal-item p-4 rounded-lg cursor-pointer border border-white/5 flex items-center space-x-4 transition-all bg-gradient-to-r ${item.gradient}`}
+                        >
+                          <div className="create-modal-icon p-3 rounded-lg bg-background-darker">
+                            {item.icon}
+                          </div>
+                          <div>
+                            <h4 className="text-text-primary font-medium">{item.title}</h4>
+                            <p className="text-text-secondary text-sm">{item.description}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

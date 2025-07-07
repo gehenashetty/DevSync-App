@@ -3,6 +3,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase";
 import AuthForm from "./components/AuthForm";
 import Dashboard from "./components/Dashboard";
+
 import { motion } from "framer-motion";
 import {
   BrowserRouter as Router,
@@ -158,6 +159,7 @@ function App() {
                 path="/dashboard"
                 element={user ? <Dashboard /> : <Navigate to="/" />}
               />
+
             </Routes>
           </Router>
         </ErrorBoundary>

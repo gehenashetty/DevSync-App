@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { X, Github, AlertCircle, Link } from 'lucide-react';
 import Button from '../ui/Button';
 
-const AddRepoForm = ({ onSubmit, onCancel }) => {
+const AddRepoForm = ({ onSubmit, onCancel, onOpenGlobalRepoSearch }) => {
   const [repoUrl, setRepoUrl] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState('');
